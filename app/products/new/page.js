@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
+import { createProduct } from "@/app/actions";
+import { ChevronLeft, Save } from "lucide-react";
+import Link from "next/link";
 
 function NewProductForm() {
     const router = useRouter();
