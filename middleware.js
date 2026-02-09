@@ -10,8 +10,7 @@ export async function middleware(request) {
     const path = request.nextUrl.pathname;
 
     // Paths that don't need authentication
-    // Exclude login, public assets, and api routes that might be needed
-    if (path.startsWith('/login') || path.startsWith('/_next') || path.startsWith('/static') || path === '/favicon.ico') {
+    if (path.startsWith('/login') || path.startsWith('/register') || path.startsWith('/_next') || path.startsWith('/static') || path === '/favicon.ico' || path === '/manifest.json') {
         return NextResponse.next();
     }
 
@@ -37,13 +36,9 @@ export async function middleware(request) {
 export const config = {
     matcher: [
         /*
-         * Match all request paths except for the ones starting with:
-         * - api (API routes)
-         * - _next/static (static files)
-         * - _next/image (image optimization files)
-         * - favicon.ico (favicon file)
-         * - login (the login page itself)
+         * Match all request paths except for:
+         * - api, _next/static, _next/image, favicon.ico, login, register, manifest.json
          */
-        '/((?!api|_next/static|_next/image|favicon.ico|login).*)',
+        '/((?!api|_next/static|_next/image|favicon.ico|login|register|manifest.json).*)',
     ],
 };
