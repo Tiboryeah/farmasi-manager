@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Correct import for App Router
-import { getProduct, updateProductStock } from "@/app/actions"; // verify path
+import { getProduct, updateProductStock, updateProduct } from "@/app/actions"; // verify path
 import { ChevronLeft, Save, History, TrendingUp, TrendingDown } from "lucide-react";
 import Link from "next/link";
 import { use } from "react"; // For params
@@ -43,7 +43,7 @@ export default function ProductDetailPage({ params }) {
 
     const handleUpdate = async (e) => {
         e.preventDefault();
-        await import("@/app/actions").then(mod => mod.updateProduct(product.id, formData));
+        await updateProduct(product.id, formData);
         setProduct(formData);
         setIsEditing(false);
         alert("Producto actualizado");
