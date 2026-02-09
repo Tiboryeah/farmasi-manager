@@ -11,13 +11,6 @@ import { redirect } from 'next/navigation';
 const SECRET_KEY = process.env.JWT_SECRET || "secret-key-change-in-prod";
 const key = new TextEncoder().encode(SECRET_KEY);
 
-// Initialize DB on first load (lazy)
-// try {
-//   initDB();
-// } catch (e) {
-//   console.error("DB Init failed", e);
-// }
-
 // Helper to serialize Mongoose docs to plain objects
 const serialize = (data) => {
   if (!data) return null;
@@ -26,27 +19,30 @@ const serialize = (data) => {
 
 // --- AUTH ---
 export async function loginAction(formData) {
-  try {
-    const username = formData.get("username");
-    const password = formData.get("password");
+  const username = formData.get("username");
+  const password = formData.get("password");
 
+  try {
     await connectDB();
 
-    // Check if user exists
-    const user = await User.findOne({ username });
+    // Ensure DB is initialized (seeded) if needed, lazy connect
+    // We can call initDB here if we want to be sure default products exist, 
+    // but for login, we mainly care about the User.
+    const userCount = await User.countDocuments();
 
-    // If NO users exist at all, create this one as admin (First Run Experience)
-    const count = await User.countDocuments();
-    if (count === 0) {
+    // First Run: Create Admin
+    if (userCount === 0) {
       const hashedPassword = await bcrypt.hash(password, 10);
       await User.create({ username, password: hashedPassword });
-      // Proceed to login
-    } else if (!user) {
-      // Simple delay to prevent timing attacks
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return { error: "Usuario o contraseña inválidos" };
+      await initDB(); // Seed products too if it's the very first run
     } else {
-      // Verify password
+      // Check User
+      const user = await User.findOne({ username });
+      if (!user) {
+        // Simple delay to prevent timing attacks
+        await new Promise(resolve => setTimeout(resolve, 500));
+        return { error: "Usuario o contraseña inválidos" };
+      }
       const match = await bcrypt.compare(password, user.password);
       if (!match) return { error: "Usuario o contraseña inválidos" };
     }
@@ -59,10 +55,15 @@ export async function loginAction(formData) {
       .setExpirationTime("30d")
       .sign(key);
 
-    cookies().set("session", session, { expires, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
-  } catch (e) {
-    console.error("Login Error:", e);
-    return { error: "Error interno del servidor. Intenta de nuevo." };
+    (await cookies()).set("session", session, { expires, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+  } catch (error) {
+    // Next.js redirect() throws an error, which should not be caught here.
+    // Re-throw if it's a redirect error.
+    if (error && error.message && error.message.includes('NEXT_REDIRECT')) {
+      throw error;
+    }
+    console.error("Login Error:", error);
+    return { error: "Error interno del servidor. Revisa los logs." };
   }
 
   redirect('/');
