@@ -4,6 +4,7 @@ import { useState } from "react";
 import { loginAction } from "@/app/actions";
 import { useRouter } from "next/navigation";
 import { User, Lock, Key, ArrowRight, ShieldCheck } from "lucide-react";
+import Link from "next/link";
 
 export default function LoginPage() {
     const [loading, setLoading] = useState(false);
