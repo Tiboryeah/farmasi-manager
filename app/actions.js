@@ -214,6 +214,29 @@ export async function updateProductStock(id, newStock, reason) {
   revalidatePath('/inventory');
 }
 
+export async function updateProduct(id, data) {
+  const session = await getSession();
+  if (!session) return;
+  await connectDB();
+
+  const product = await Product.findOne({ _id: id, userId: session.userId });
+  if (!product) return;
+
+  product.name = data.name;
+  product.code = data.code || '';
+  product.category = data.category || 'General';
+  product.cost = parseFloat(data.cost);
+  product.price = parseFloat(data.price);
+  product.stock = parseInt(data.stock);
+  product.minStock = parseInt(data.minStock || 5);
+  if (data.image) product.image = data.image;
+
+  await product.save();
+
+  revalidatePath('/inventory');
+  revalidatePath(`/inventory/${id}`);
+}
+
 // --- SALES ---
 export async function getSales() {
   const session = await getSession();
