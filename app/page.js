@@ -14,6 +14,8 @@ export default function Home() {
   const [recent, setRecent] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [percentageChange, setPercentageChange] = useState(0);
+
   useEffect(() => {
     async function loadData() {
       try {
@@ -35,16 +37,6 @@ export default function Home() {
     loadData();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
-  const [percentageChange, setPercentageChange] = useState(0);
-
   useEffect(() => {
     if (stats.yesterday?.revenue > 0) {
       const change = ((stats.today.revenue - stats.yesterday.revenue) / stats.yesterday.revenue) * 100;
@@ -55,6 +47,14 @@ export default function Home() {
       setPercentageChange(0);
     }
   }, [stats]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
