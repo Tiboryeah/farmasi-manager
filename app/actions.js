@@ -302,6 +302,16 @@ export async function getDashboardStats() {
   startOfMonth.setDate(1);
   startOfMonth.setHours(0, 0, 0, 0);
 
+  // Sales Yesterday (for comparison)
+  const yesterdayStart = new Date(today);
+  yesterdayStart.setDate(today.getDate() - 1);
+  const yesterdayEnd = new Date(today);
+
+  const salesYesterday = await Sale.aggregate([
+    { $match: { userId, date: { $gte: yesterdayStart, $lt: yesterdayEnd } } },
+    { $group: { _id: null, revenue: { $sum: '$total' } } }
+  ]);
+
   // Sales Today
   const salesToday = await Sale.aggregate([
     { $match: { userId, date: { $gte: today } } },
@@ -333,6 +343,9 @@ export async function getDashboardStats() {
     today: {
       revenue: salesToday[0]?.revenue || 0,
       profit: salesToday[0]?.profit || 0
+    },
+    yesterday: {
+      revenue: salesYesterday[0]?.revenue || 0
     },
     month: {
       revenue: salesMonth[0]?.revenue || 0,

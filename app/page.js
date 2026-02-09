@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { PlusCircle, TrendingUp, DollarSign, Package, ArrowUpRight, ShoppingCart } from "lucide-react";
+import { PlusCircle, TrendingUp, TrendingDown, DollarSign, Package, ArrowUpRight, ShoppingCart } from "lucide-react";
 import Link from "next/link";
 import { getDashboardStats, getRecentActivity, performWeeklyBackupAction } from "@/app/actions";
 
@@ -43,6 +43,19 @@ export default function Home() {
     );
   }
 
+  const [percentageChange, setPercentageChange] = useState(0);
+
+  useEffect(() => {
+    if (stats.yesterday?.revenue > 0) {
+      const change = ((stats.today.revenue - stats.yesterday.revenue) / stats.yesterday.revenue) * 100;
+      setPercentageChange(change);
+    } else if (stats.today.revenue > 0) {
+      setPercentageChange(100);
+    } else {
+      setPercentageChange(0);
+    }
+  }, [stats]);
+
   return (
     <div className="flex flex-col gap-8 animate-fade-in">
       <header className="flex items-center justify-between">
@@ -67,8 +80,9 @@ export default function Home() {
             </div>
           </div>
           <div className="stat-value">${stats.today.revenue.toFixed(2)}</div>
-          <div className="text-xs text-success flex items-center gap-1 font-medium">
-            <TrendingUp size={14} /> +12% vs ayer
+          <div className={`text-xs flex items-center gap-1 font-medium ${percentageChange >= 0 ? 'text-success' : 'text-danger'}`}>
+            {percentageChange >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
+            {Math.abs(percentageChange).toFixed(1)}% vs ayer
           </div>
         </div>
 
