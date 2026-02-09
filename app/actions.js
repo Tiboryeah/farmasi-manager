@@ -4,13 +4,26 @@ import { Product, Sale, InventoryMovement, Expense, User } from '@/lib/models';
 import { connectDB, initDB } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
 import { cookies } from 'next/headers';
-import { SignJWT } from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 import bcrypt from 'bcryptjs';
+import mongoose from 'mongoose';
 import { redirect } from 'next/navigation';
 import { checkAndRunWeeklyBackup, getBackupData } from '@/lib/backup';
 
 const SECRET_KEY = process.env.JWT_SECRET || "secret-key-change-in-prod";
 const key = new TextEncoder().encode(SECRET_KEY);
+
+// Helper to get current session
+async function getSession() {
+  const session = (await cookies()).get("session")?.value;
+  if (!session) return null;
+  try {
+    const { payload } = await jwtVerify(session, key, { algorithms: ["HS256"] });
+    return payload;
+  } catch (e) {
+    return null;
+  }
+}
 
 // Helper to serialize Mongoose docs to plain objectsa 
 const serialize = (data) => {
@@ -19,9 +32,11 @@ const serialize = (data) => {
 };
 
 export async function deleteProduct(productId) {
+  const session = await getSession();
+  if (!session) return { error: "No autorizado" };
   try {
     await connectDB();
-    await Product.findByIdAndDelete(productId);
+    await Product.findOneAndDelete({ _id: productId, userId: session.userId });
     revalidatePath('/inventory');
     return { success: true };
   } catch (error) {
@@ -32,18 +47,20 @@ export async function deleteProduct(productId) {
 
 // --- DATABASE MAINTENANCE ---
 export async function resetDatabaseAction() {
+  const session = await getSession();
+  if (!session) return { error: "No autorizado" };
   try {
     await connectDB();
-    // Delete all business data but KEEP users
+    // Delete all business data ONLY FOR THIS USER
     await Promise.all([
-      Product.deleteMany({}),
-      Sale.deleteMany({}),
-      InventoryMovement.deleteMany({}),
-      Expense.deleteMany({})
+      Product.deleteMany({ userId: session.userId }),
+      Sale.deleteMany({ userId: session.userId }),
+      InventoryMovement.deleteMany({ userId: session.userId }),
+      Expense.deleteMany({ userId: session.userId })
     ]);
 
-    // Seed basic products again
-    await initDB();
+    // Seed basic products again for THIS USER
+    await initDB(session.userId);
 
     revalidatePath('/');
     revalidatePath('/inventory');
@@ -65,22 +82,22 @@ export async function loginAction(formData) {
 
     const userCount = await User.countDocuments();
 
+    let user;
     // First Run: Create Test Accounts
     if (userCount === 0) {
-      // Create 'prueba' user with 'prueba' password
       const hashedPrueba = await bcrypt.hash("prueba", 10);
       await User.create({ username: "prueba", password: hashedPrueba });
 
-      // If the current login isn't prueba, create that one too
       if (username !== "prueba") {
         const hashedPassword = await bcrypt.hash(password, 10);
-        await User.create({ username, password: hashedPassword });
+        user = await User.create({ username, password: hashedPassword });
+      } else {
+        user = await User.findOne({ username: "prueba" });
       }
 
-      await initDB();
+      await initDB(user._id); // We'll need to update initDB to take a userId
     } else {
-      // Check User
-      const user = await User.findOne({ username });
+      user = await User.findOne({ username });
       if (!user) {
         await new Promise(resolve => setTimeout(resolve, 500));
         return { error: "Usuario o contraseña inválidos" };
@@ -91,7 +108,7 @@ export async function loginAction(formData) {
 
     // Login Success: Create Session
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-    const session = await new SignJWT({ username })
+    const session = await new SignJWT({ username: user.username, userId: user._id.toString() })
       .setProtectedHeader({ alg: "HS256" })
       .setIssuedAt()
       .setExpirationTime("30d")
@@ -119,8 +136,10 @@ export async function logoutAction() {
 
 // --- PRODUCTS ---
 export async function getProducts(search = '') {
+  const session = await getSession();
+  if (!session) return [];
   await connectDB();
-  const query = { active: true };
+  const query = { userId: session.userId, active: true };
   if (search) {
     query.name = { $regex: search, $options: 'i' };
   }
@@ -129,9 +148,11 @@ export async function getProducts(search = '') {
 }
 
 export async function getProduct(id) {
+  const session = await getSession();
+  if (!session) return null;
   await connectDB();
   try {
-    const product = await Product.findById(id).lean();
+    const product = await Product.findOne({ _id: id, userId: session.userId }).lean();
     if (!product) return null;
     return serialize({ ...product, id: product._id.toString() });
   } catch (e) {
@@ -140,8 +161,11 @@ export async function getProduct(id) {
 }
 
 export async function createProduct(data) {
+  const session = await getSession();
+  if (!session) return null;
   await connectDB();
   const product = await Product.create({
+    userId: session.userId,
     name: data.name,
     category: data.category || 'General',
     cost: parseFloat(data.cost),
@@ -153,8 +177,9 @@ export async function createProduct(data) {
 
   // Initial Inventory Movement
   await InventoryMovement.create({
-    product: product._id,
-    type: 'Inicial',
+    userId: session.userId,
+    productId: product._id,
+    type: 'entry',
     quantity: parseInt(data.stock),
     reason: 'Inventario Inicial',
     date: new Date()
@@ -166,8 +191,10 @@ export async function createProduct(data) {
 }
 
 export async function updateProductStock(id, newStock, reason) {
+  const session = await getSession();
+  if (!session) return;
   await connectDB();
-  const product = await Product.findById(id);
+  const product = await Product.findOne({ _id: id, userId: session.userId });
   if (!product) return;
 
   const diff = newStock - product.stock;
@@ -175,9 +202,10 @@ export async function updateProductStock(id, newStock, reason) {
   await product.save();
 
   await InventoryMovement.create({
-    product: product._id,
-    type: 'Ajuste',
-    quantity: diff,
+    userId: session.userId,
+    productId: product._id,
+    type: diff >= 0 ? 'entry' : 'exit',
+    quantity: Math.abs(diff),
     reason: reason,
     date: new Date()
   });
@@ -187,23 +215,31 @@ export async function updateProductStock(id, newStock, reason) {
 
 // --- SALES ---
 export async function getSales() {
+  const session = await getSession();
+  if (!session) return [];
   await connectDB();
-  const sales = await Sale.find().sort({ date: -1 }).limit(50).lean();
+  const sales = await Sale.find({ userId: session.userId }).sort({ date: -1 }).limit(50).lean();
   return serialize(sales.map(s => ({ ...s, id: s._id.toString() })));
 }
 
 export async function getAllSales() {
+  const session = await getSession();
+  if (!session) return [];
   await connectDB();
-  const sales = await Sale.find().sort({ date: -1 }).lean();
+  const sales = await Sale.find({ userId: session.userId }).sort({ date: -1 }).lean();
   return serialize(sales.map(s => ({ ...s, id: s._id.toString() })));
 }
 
 export async function createSale(cart) {
+  const session = await getSession();
+  if (!session) return null;
   await connectDB();
   // cart: array of { id, qty, price, cost }
   let total = 0;
   let totalProfit = 0;
   const saleItems = [];
+
+  const uid = new mongoose.Types.ObjectId(session.userId);
 
   for (const item of cart) {
     const qty = parseInt(item.qty);
@@ -212,32 +248,31 @@ export async function createSale(cart) {
     total += item.price * qty;
     totalProfit += profit;
 
-    // Prepare item for embedding
     saleItems.push({
-      product: item.id,
-      name: item.name || 'Unknown', // Mongoose schema has name? Yes I added it to snapshot
+      productId: item.id,
+      name: item.name || 'Unknown',
       quantity: qty,
       unitCost: item.cost,
       unitPrice: item.price,
       profit: profit
     });
 
-    // Update Stock
-    await Product.findByIdAndUpdate(item.id, { $inc: { stock: -qty } });
+    // Update Stock (scoped to user)
+    await Product.findOneAndUpdate({ _id: item.id, userId: session.userId }, { $inc: { stock: -qty } });
 
     // Log Movement
-    // Note: We'll do this after creating the sale to have the sale ID if we wanted to link it, 
-    // but strictly we just need to log it.
     await InventoryMovement.create({
-      product: item.id,
-      type: 'Venta',
-      quantity: -qty,
-      reason: `Venta`, // We don't have the specific sale ID yet if we do it here, but that's fine.
+      userId: session.userId,
+      productId: item.id,
+      type: 'exit',
+      quantity: qty,
+      reason: `Venta`,
       date: new Date()
     });
   }
 
   const sale = await Sale.create({
+    userId: session.userId,
     total,
     profit: totalProfit,
     items: saleItems,
@@ -252,7 +287,11 @@ export async function createSale(cart) {
 
 // --- DASHBOARD ---
 export async function getDashboardStats() {
+  const session = await getSession();
+  if (!session) return null;
   await connectDB();
+  const userId = new mongoose.Types.ObjectId(session.userId);
+
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
@@ -262,26 +301,27 @@ export async function getDashboardStats() {
 
   // Sales Today
   const salesToday = await Sale.aggregate([
-    { $match: { date: { $gte: today } } },
+    { $match: { userId, date: { $gte: today } } },
     { $group: { _id: null, revenue: { $sum: '$total' }, profit: { $sum: '$profit' } } }
   ]);
 
   // Sales Month
   const salesMonth = await Sale.aggregate([
-    { $match: { date: { $gte: startOfMonth } } },
+    { $match: { userId, date: { $gte: startOfMonth } } },
     { $group: { _id: null, revenue: { $sum: '$total' }, profit: { $sum: '$profit' } } }
   ]);
 
   // Low Stock
   const lowStock = await Product.countDocuments({
+    userId,
     $expr: { $lte: ["$stock", "$minStock"] },
     active: true
   });
 
   // Total Products & Items
-  const totalProducts = await Product.countDocuments({ active: true });
+  const totalProducts = await Product.countDocuments({ userId, active: true });
   const stockAggregation = await Product.aggregate([
-    { $match: { active: true } },
+    { $match: { userId, active: true } },
     { $group: { _id: null, total: { $sum: '$stock' } } }
   ]);
   const totalStock = stockAggregation[0]?.total || 0;
@@ -302,27 +342,24 @@ export async function getDashboardStats() {
 }
 
 export async function getRecentActivity() {
+  const session = await getSession();
+  if (!session) return [];
   await connectDB();
-  // Simulate the old join: get recent sales and flatten the list or just return sales
-  // The UI likely expects a list of items sold.
-  // SQL was: SELECT s.id, s.date, s.total, i.quantity, p.name ...
 
-  // We'll fetch recent sales and map them
-  const sales = await Sale.find().sort({ date: -1 }).limit(5).populate('items.product').lean();
-
-  // Flatten to match the "Activity" feed style if needed, or just return sales.
-  // Looking at the SQL, it returned one row per ITEM.
-  // Let's try to reconstruct that structure.
+  const sales = await Sale.find({ userId: session.userId })
+    .sort({ date: -1 })
+    .limit(5)
+    .lean();
 
   const activity = []
   for (const sale of sales) {
     for (const item of sale.items) {
       activity.push({
-        id: sale._id.toString(), // Sale ID
+        id: sale._id.toString(),
         date: sale.date,
-        total: sale.total, // Ensure this makes sense in context, SQL returned sale total
+        total: sale.total,
         quantity: item.quantity,
-        name: item.name || (item.product ? item.product.name : 'Unknown')
+        name: item.name || 'Unknown'
       });
     }
   }
@@ -332,18 +369,23 @@ export async function getRecentActivity() {
 
 // --- EXPENSES ---
 export async function getExpenses() {
+  const session = await getSession();
+  if (!session) return [];
   await connectDB();
-  const expenses = await Expense.find().sort({ date: -1 }).limit(20).lean();
+  const expenses = await Expense.find({ userId: session.userId }).sort({ date: -1 }).limit(30).lean();
   return serialize(expenses.map(e => ({ ...e, id: e._id.toString() })));
 }
 
 export async function createExpense(data) {
+  const session = await getSession();
+  if (!session) return;
   await connectDB();
   await Expense.create({
+    userId: session.userId,
     category: data.category,
     amount: parseFloat(data.amount),
-    paymentMethod: data.paymentMethod || 'Efectivo',
-    note: data.note || ''
+    note: data.note || '',
+    date: new Date()
   });
   revalidatePath('/');
   revalidatePath('/expenses');
@@ -355,6 +397,8 @@ export async function performWeeklyBackupAction() {
 }
 
 export async function downloadBackupAction() {
-  const data = await getBackupData();
+  const session = await getSession();
+  if (!session) return null;
+  const data = await getBackupData(session.userId);
   return JSON.parse(JSON.stringify(data));
 }
