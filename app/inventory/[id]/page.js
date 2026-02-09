@@ -18,13 +18,16 @@ export default function ProductDetailPage({ params }) {
     // Let's keep it simple: `params.id`
     const { id } = use(params);
 
+    const [currentProduct, setCurrentProduct] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [formData, setFormData] = useState({});
     const [preview, setPreview] = useState(null);
+    const [adjustment, setAdjustment] = useState(0);
+    const [reason, setReason] = useState("Ajuste Manual");
 
     useEffect(() => {
         if (id) getProduct(id).then(p => {
-            setProduct(p);
+            setCurrentProduct(p);
             setFormData(p);
             setPreview(p.image && p.image.startsWith('data:image') ? p.image : null);
         });
@@ -33,9 +36,9 @@ export default function ProductDetailPage({ params }) {
     const handleAdjust = async (e) => {
         e.preventDefault();
         if (!adjustment) return;
-        const newStock = product.stock + parseInt(adjustment);
-        await updateProductStock(product.id, newStock, reason);
-        setProduct({ ...product, stock: newStock });
+        const newStock = currentProduct.stock + parseInt(adjustment);
+        await updateProductStock(currentProduct.id, newStock, reason);
+        setCurrentProduct({ ...currentProduct, stock: newStock });
         setAdjustment(0);
         setReason("Ajuste Manual");
         alert("Stock actualizado");
@@ -43,8 +46,8 @@ export default function ProductDetailPage({ params }) {
 
     const handleUpdate = async (e) => {
         e.preventDefault();
-        await updateProduct(product.id, formData);
-        setProduct(formData);
+        await updateProduct(currentProduct.id, formData);
+        setCurrentProduct(formData);
         setIsEditing(false);
         alert("Producto actualizado");
     };
@@ -93,7 +96,7 @@ export default function ProductDetailPage({ params }) {
         reader.readAsDataURL(file);
     };
 
-    if (!product) return <div className="p-4">Cargando...</div>;
+    if (!currentProduct) return <div className="p-4">Cargando...</div>;
 
     if (isEditing) {
         return (
@@ -178,7 +181,7 @@ export default function ProductDetailPage({ params }) {
             <header className="flex items-center justify-between py-4 mb-2">
                 <div className="flex items-center gap-3">
                     <Link href="/inventory" className="btn btn-ghost p-1"><ChevronLeft /></Link>
-                    <h1 className="text-xl font-bold truncate max-w-[200px]">{product.name}</h1>
+                    <h1 className="text-xl font-bold truncate max-w-[200px]">{currentProduct.name}</h1>
                 </div>
                 <button onClick={() => setIsEditing(true)} className="btn btn-ghost p-2 text-primary">
                     <History size={20} className="hidden" /> {/* Placeholder repurpose or remove */}
@@ -188,16 +191,16 @@ export default function ProductDetailPage({ params }) {
 
             <div className="card p-4 mb-4 flex gap-4 items-center">
                 <div className="h-20 w-20 bg-surface-hover rounded-xl overflow-hidden flex items-center justify-center">
-                    {product.image && product.image.startsWith('data:image') ? (
-                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    {currentProduct.image && currentProduct.image.startsWith('data:image') ? (
+                        <img src={currentProduct.image} alt={currentProduct.name} className="w-full h-full object-cover" />
                     ) : (
-                        <span className="text-4xl">{product.image || "📦"}</span>
+                        <span className="text-4xl">{currentProduct.image || "📦"}</span>
                     )}
                 </div>
                 <div>
-                    <div className="text-sm text-secondary uppercase font-bold">{product.category} {product.code && `• ${product.code}`}</div>
-                    <div className="text-2xl font-bold text-white">{product.stock} un.</div>
-                    <div className="text-xs text-secondary">Stock Mínimo: {product.min_stock}</div>
+                    <div className="text-sm text-secondary uppercase font-bold">{currentProduct.category} {currentProduct.code && `• ${currentProduct.code}`}</div>
+                    <div className="text-2xl font-bold text-white">{currentProduct.stock} un.</div>
+                    <div className="text-xs text-secondary">Stock Mínimo: {currentProduct.min_stock}</div>
                 </div>
             </div>
 
@@ -246,15 +249,15 @@ export default function ProductDetailPage({ params }) {
                 <h2 className="text-sm font-bold mb-2 text-secondary">Detalles Financieros</h2>
                 <div className="flex justify-between py-2 border-b border-border">
                     <span>Costo Unitario</span>
-                    <span className="font-bold">${product.cost}</span>
+                    <span className="font-bold">${currentProduct.cost}</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-border">
                     <span>Precio Sugerido</span>
-                    <span className="font-bold text-success">${product.price}</span>
+                    <span className="font-bold text-success">${currentProduct.price}</span>
                 </div>
                 <div className="flex justify-between py-2">
                     <span>Margen Sugerido</span>
-                    <span className="text-success">+${(product.price - product.cost).toFixed(2)}</span>
+                    <span className="text-success">+${(currentProduct.price - currentProduct.cost).toFixed(2)}</span>
                 </div>
             </div>
         </div>
