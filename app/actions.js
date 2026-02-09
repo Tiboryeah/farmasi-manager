@@ -12,11 +12,11 @@ const SECRET_KEY = process.env.JWT_SECRET || "secret-key-change-in-prod";
 const key = new TextEncoder().encode(SECRET_KEY);
 
 // Initialize DB on first load (lazy)
-try {
-  initDB();
-} catch (e) {
-  console.error("DB Init failed", e);
-}
+// try {
+//   initDB();
+// } catch (e) {
+//   console.error("DB Init failed", e);
+// }
 
 // Helper to serialize Mongoose docs to plain objects
 const serialize = (data) => {
@@ -26,39 +26,44 @@ const serialize = (data) => {
 
 // --- AUTH ---
 export async function loginAction(formData) {
-  const username = formData.get("username");
-  const password = formData.get("password");
+  try {
+    const username = formData.get("username");
+    const password = formData.get("password");
 
-  await connectDB();
+    await connectDB();
 
-  // Check if user exists
-  const user = await User.findOne({ username });
+    // Check if user exists
+    const user = await User.findOne({ username });
 
-  // If NO users exist at all, create this one as admin (First Run Experience)
-  const count = await User.countDocuments();
-  if (count === 0) {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await User.create({ username, password: hashedPassword });
-    // Proceed to login
-  } else if (!user) {
-    // Simple delay to prevent timing attacks
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return { error: "Usuario o contraseña inválidos" };
-  } else {
-    // Verify password
-    const match = await bcrypt.compare(password, user.password);
-    if (!match) return { error: "Usuario o contraseña inválidos" };
+    // If NO users exist at all, create this one as admin (First Run Experience)
+    const count = await User.countDocuments();
+    if (count === 0) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await User.create({ username, password: hashedPassword });
+      // Proceed to login
+    } else if (!user) {
+      // Simple delay to prevent timing attacks
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return { error: "Usuario o contraseña inválidos" };
+    } else {
+      // Verify password
+      const match = await bcrypt.compare(password, user.password);
+      if (!match) return { error: "Usuario o contraseña inválidos" };
+    }
+
+    // Login Success: Create Session
+    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
+    const session = await new SignJWT({ username })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("30d")
+      .sign(key);
+
+    cookies().set("session", session, { expires, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+  } catch (e) {
+    console.error("Login Error:", e);
+    return { error: "Error interno del servidor. Intenta de nuevo." };
   }
-
-  // Login Success: Create Session
-  const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
-  const session = await new SignJWT({ username })
-    .setProtectedHeader({ alg: "HS256" })
-    .setIssuedAt()
-    .setExpirationTime("30d")
-    .sign(key);
-
-  cookies().set("session", session, { expires, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
 
   redirect('/');
 }
