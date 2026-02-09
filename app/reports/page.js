@@ -100,14 +100,28 @@ export default function ReportsPage() {
             });
         }
 
+        const relevantExpenses = expenses.filter(e => {
+            if (timeFrame === 'year') {
+                return new Date(e.date).getFullYear() === now.getFullYear();
+            } else {
+                const daysToShow = timeFrame === 'week' ? 7 : 30;
+                const d = new Date(e.date);
+                const diff = Math.ceil(Math.abs(now - d) / (1000 * 60 * 60 * 24));
+                return diff <= daysToShow;
+            }
+        });
+
         const totalRevenue = relevantSales.reduce((acc, curr) => acc + curr.total, 0);
-        const totalProfit = relevantSales.reduce((acc, curr) => acc + (curr.profit || 0), 0);
+        const grossProfit = relevantSales.reduce((acc, curr) => acc + (curr.profit || 0), 0);
+        const totalExpenses = relevantExpenses.reduce((acc, curr) => acc + curr.amount, 0);
+
+        const totalProfit = grossProfit - totalExpenses; // Net Profit
         const totalSalesCount = relevantSales.length;
         const avgTicket = totalSalesCount > 0 ? totalRevenue / totalSalesCount : 0;
         const margin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
 
-        return { totalRevenue, totalProfit, avgTicket, margin };
-    }, [sales, timeFrame]);
+        return { totalRevenue, totalProfit, avgTicket, margin, grossProfit, totalExpenses };
+    }, [sales, expenses, timeFrame]);
 
     // --- TOP PRODUCTS ---
     const topProducts = useMemo(() => {
@@ -336,7 +350,9 @@ export default function ReportsPage() {
                     </div>
                     <div>
                         <div className="stat-value text-success">${kpis.totalProfit.toLocaleString()}</div>
-                        <p className="text-[10px] text-secondary font-bold uppercase">Retorno neto</p>
+                        <p className="text-[10px] text-secondary font-bold uppercase">
+                            Bruta: ${kpis.grossProfit.toLocaleString()} | Gastos: -${kpis.totalExpenses.toLocaleString()}
+                        </p>
                     </div>
                 </div>
 

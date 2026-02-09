@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { createProduct } from "@/app/actions";
-import { ChevronLeft, Save } from "lucide-react";
-import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 
-export default function NewProductPage() {
+function NewProductForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const defaultType = searchParams.get('type') || 'product';
+
     const [formData, setFormData] = useState({
         name: "",
         category: "",
@@ -15,7 +16,8 @@ export default function NewProductPage() {
         price: "",
         stock: "",
         minStock: "5",
-        image: "💄"
+        image: null,
+        type: defaultType
     });
 
     const [preview, setPreview] = useState(null);
@@ -80,6 +82,23 @@ export default function NewProductPage() {
             </header>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <div className="flex gap-2 p-1 bg-zinc-900 rounded-xl mb-4">
+                    <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, type: 'product' })}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'product' ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500'}`}
+                    >
+                        Producto para Venta
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, type: 'sample' })}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'sample' ? 'bg-primary text-white shadow-lg' : 'text-zinc-500'}`}
+                    >
+                        Muestra (Gasto)
+                    </button>
+                </div>
+
                 <div className="flex flex-col items-center gap-4 mb-4">
                     <div className="h-40 w-40 rounded-3xl bg-zinc-900 border-2 border-dashed border-zinc-700 flex items-center justify-center overflow-hidden relative group">
                         {preview ? (
@@ -149,5 +168,13 @@ export default function NewProductPage() {
                 </button>
             </form>
         </div>
+    );
+}
+
+export default function NewProductPage() {
+    return (
+        <Suspense fallback={<div>Cargando...</div>}>
+            <NewProductForm />
+        </Suspense>
     );
 }

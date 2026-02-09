@@ -173,7 +173,8 @@ export async function createProduct(data) {
     price: parseFloat(data.price),
     stock: parseInt(data.stock),
     minStock: parseInt(data.minStock || 5),
-    image: data.image || '📦'
+    image: data.image || '📦',
+    type: data.type || 'product'
   });
 
   // Initial Inventory Movement
@@ -185,6 +186,17 @@ export async function createProduct(data) {
     reason: 'Inventario Inicial',
     date: new Date()
   });
+
+  // If it's a sample, record the expense
+  if (data.type === 'sample' && data.stock > 0 && data.cost > 0) {
+    await Expense.create({
+      userId: session.userId,
+      category: 'Muestras',
+      amount: data.stock * data.cost,
+      note: `Inventario Inicial: ${data.name}`,
+      date: new Date()
+    });
+  }
 
   revalidatePath('/inventory');
   revalidatePath('/sales/new');
@@ -211,6 +223,16 @@ export async function updateProductStock(id, newStock, reason) {
     date: new Date()
   });
 
+  if (product.type === 'sample' && diff > 0 && product.cost > 0) {
+    await Expense.create({
+      userId: session.userId,
+      category: 'Muestras',
+      amount: diff * product.cost,
+      note: `Entrada de Stock: ${product.name}`,
+      date: new Date()
+    });
+  }
+
   revalidatePath('/inventory');
 }
 
@@ -230,6 +252,7 @@ export async function updateProduct(id, data) {
   product.stock = parseInt(data.stock);
   product.minStock = parseInt(data.minStock || 5);
   if (data.image) product.image = data.image;
+  if (data.type) product.type = data.type;
 
   await product.save();
 

@@ -108,6 +108,23 @@ export default function ProductDetailPage({ params }) {
                 </header>
 
                 <form onSubmit={handleUpdate} className="flex flex-col gap-4 p-4">
+                    <div className="flex gap-2 p-1 bg-zinc-900 rounded-xl mb-4">
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, type: 'product' })}
+                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'product' || !formData.type ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500'}`}
+                        >
+                            Producto
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setFormData({ ...formData, type: 'sample' })}
+                            className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'sample' ? 'bg-primary text-white shadow-lg' : 'text-zinc-500'}`}
+                        >
+                            Muestra
+                        </button>
+                    </div>
+
                     <div className="flex flex-col items-center gap-4 mb-4">
                         <div className="h-40 w-40 rounded-3xl bg-zinc-900 border-2 border-dashed border-zinc-700 flex items-center justify-center overflow-hidden relative group">
                             {preview ? (
@@ -198,7 +215,14 @@ export default function ProductDetailPage({ params }) {
                     )}
                 </div>
                 <div>
-                    <div className="text-sm text-secondary uppercase font-bold">{currentProduct.category} {currentProduct.code && `• ${currentProduct.code}`}</div>
+                    <div className="flex items-center gap-2">
+                        {currentProduct.type === 'sample' && (
+                            <span className="px-2 py-0.5 rounded-full bg-primary/20 text-primary text-[10px] font-black uppercase tracking-widest border border-primary/20">
+                                Muestra
+                            </span>
+                        )}
+                        <span className="text-sm text-secondary uppercase font-bold">{currentProduct.category} {currentProduct.code && `• ${currentProduct.code}`}</span>
+                    </div>
                     <div className="text-2xl font-bold text-white">{currentProduct.stock} un.</div>
                     <div className="text-xs text-secondary">Stock Mínimo: {currentProduct.min_stock}</div>
                 </div>

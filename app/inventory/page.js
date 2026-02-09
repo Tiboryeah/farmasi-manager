@@ -7,6 +7,7 @@ import Link from "next/link";
 import * as XLSX from 'xlsx';
 
 export default function InventoryPage() {
+    const [activeTab, setActiveTab] = useState('product'); // 'product' | 'sample'
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredProducts, setFilteredProducts] = useState([]);
@@ -21,12 +22,15 @@ export default function InventoryPage() {
     }, []);
 
     useEffect(() => {
-        const filtered = products.filter(p =>
-            p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            p.category.toLowerCase().includes(searchTerm.toLowerCase())
-        );
+        const filtered = products.filter(p => {
+            const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                p.category.toLowerCase().includes(searchTerm.toLowerCase());
+            const type = p.type || 'product';
+            const matchesTab = type === activeTab;
+            return matchesSearch && matchesTab;
+        });
         setFilteredProducts(filtered);
-    }, [searchTerm, products]);
+    }, [searchTerm, products, activeTab]);
 
     const handleDelete = async (e, id) => {
         e.preventDefault();
@@ -83,11 +87,26 @@ export default function InventoryPage() {
                     >
                         <Download size={24} />
                     </button>
-                    <Link href="/products/new" className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-glow hover:scale-110 transition-all duration-300">
+                    <Link href={`/products/new?type=${activeTab}`} className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-glow hover:scale-110 transition-all duration-300">
                         <Plus size={28} />
                     </Link>
                 </div>
             </header>
+
+            <div className="flex gap-4 border-b border-white/10 pb-4">
+                <button
+                    onClick={() => setActiveTab('product')}
+                    className={`text-lg font-bold pb-2 transition-all ${activeTab === 'product' ? 'text-primary border-b-2 border-primary' : 'text-zinc-500 hover:text-white'}`}
+                >
+                    Inventario General
+                </button>
+                <button
+                    onClick={() => setActiveTab('sample')}
+                    className={`text-lg font-bold pb-2 transition-all ${activeTab === 'sample' ? 'text-primary border-b-2 border-primary' : 'text-zinc-500 hover:text-white'}`}
+                >
+                    Inventario de Muestras
+                </button>
+            </div>
 
             <div className="relative group">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 group-focus-within:text-[#f43f5e] transition-colors" size={20} />
