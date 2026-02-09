@@ -7,15 +7,28 @@ import { cookies } from 'next/headers';
 import { SignJWT } from 'jose';
 import bcrypt from 'bcryptjs';
 import { redirect } from 'next/navigation';
+import { checkAndRunWeeklyBackup, getBackupData } from '@/lib/backup';
 
 const SECRET_KEY = process.env.JWT_SECRET || "secret-key-change-in-prod";
 const key = new TextEncoder().encode(SECRET_KEY);
 
-// Helper to serialize Mongoose docs to plain objects
+// Helper to serialize Mongoose docs to plain objectsa 
 const serialize = (data) => {
   if (!data) return null;
   return JSON.parse(JSON.stringify(data));
 };
+
+export async function deleteProduct(productId) {
+  try {
+    await connectDB();
+    await Product.findByIdAndDelete(productId);
+    revalidatePath('/inventory');
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    return { error: "Error al eliminar el producto" };
+  }
+}
 
 // --- AUTH ---
 export async function loginAction(formData) {
@@ -70,7 +83,7 @@ export async function loginAction(formData) {
 }
 
 export async function logoutAction() {
-  cookies().set("session", "", { expires: new Date(0) });
+  (await cookies()).set("session", "", { expires: new Date(0) });
   redirect('/login');
 }
 
@@ -83,7 +96,7 @@ export async function getProducts(search = '') {
     query.name = { $regex: search, $options: 'i' };
   }
   const products = await Product.find(query).sort({ createdAt: -1 }).lean();
-  return products.map(p => ({ ...p, id: p._id.toString() }));
+  return serialize(products.map(p => ({ ...p, id: p._id.toString() })));
 }
 
 export async function getProduct(id) {
@@ -91,7 +104,7 @@ export async function getProduct(id) {
   try {
     const product = await Product.findById(id).lean();
     if (!product) return null;
-    return { ...product, id: product._id.toString() };
+    return serialize({ ...product, id: product._id.toString() });
   } catch (e) {
     return null;
   }
@@ -147,7 +160,13 @@ export async function updateProductStock(id, newStock, reason) {
 export async function getSales() {
   await connectDB();
   const sales = await Sale.find().sort({ date: -1 }).limit(50).lean();
-  return sales.map(s => ({ ...s, id: s._id.toString() }));
+  return serialize(sales.map(s => ({ ...s, id: s._id.toString() })));
+}
+
+export async function getAllSales() {
+  await connectDB();
+  const sales = await Sale.find().sort({ date: -1 }).lean();
+  return serialize(sales.map(s => ({ ...s, id: s._id.toString() })));
 }
 
 export async function createSale(cart) {
@@ -230,7 +249,15 @@ export async function getDashboardStats() {
     active: true
   });
 
-  return {
+  // Total Products & Items
+  const totalProducts = await Product.countDocuments({ active: true });
+  const stockAggregation = await Product.aggregate([
+    { $match: { active: true } },
+    { $group: { _id: null, total: { $sum: '$stock' } } }
+  ]);
+  const totalStock = stockAggregation[0]?.total || 0;
+
+  return serialize({
     today: {
       revenue: salesToday[0]?.revenue || 0,
       profit: salesToday[0]?.profit || 0
@@ -239,8 +266,10 @@ export async function getDashboardStats() {
       revenue: salesMonth[0]?.revenue || 0,
       profit: salesMonth[0]?.profit || 0
     },
-    lowStock: lowStock
-  };
+    lowStock: lowStock,
+    totalProducts: totalProducts,
+    totalStock: totalStock
+  });
 }
 
 export async function getRecentActivity() {
@@ -269,14 +298,14 @@ export async function getRecentActivity() {
     }
   }
 
-  return activity.slice(0, 5).map(a => serialize(a));
+  return serialize(activity.slice(0, 5));
 }
 
 // --- EXPENSES ---
 export async function getExpenses() {
   await connectDB();
   const expenses = await Expense.find().sort({ date: -1 }).limit(20).lean();
-  return expenses.map(e => ({ ...e, id: e._id.toString() }));
+  return serialize(expenses.map(e => ({ ...e, id: e._id.toString() })));
 }
 
 export async function createExpense(data) {
@@ -291,3 +320,12 @@ export async function createExpense(data) {
   revalidatePath('/expenses');
 }
 
+
+export async function performWeeklyBackupAction() {
+  return await checkAndRunWeeklyBackup();
+}
+
+export async function downloadBackupAction() {
+  const data = await getBackupData();
+  return JSON.parse(JSON.stringify(data));
+}

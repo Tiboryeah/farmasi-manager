@@ -18,6 +18,50 @@ export default function NewProductPage() {
         image: "💄"
     });
 
+    const [preview, setPreview] = useState(null);
+
+    const handleImageChange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            const img = new Image();
+            img.onload = () => {
+                // Compress image using canvas
+                const canvas = document.createElement('canvas');
+                const MAX_WIDTH = 400;
+                const MAX_HEIGHT = 400;
+                let width = img.width;
+                let height = img.height;
+
+                if (width > height) {
+                    if (width > MAX_WIDTH) {
+                        height *= MAX_WIDTH / width;
+                        width = MAX_WIDTH;
+                    }
+                } else {
+                    if (height > MAX_HEIGHT) {
+                        width *= MAX_HEIGHT / height;
+                        height = MAX_HEIGHT;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+                setPreview(compressedBase64);
+                setFormData({ ...formData, image: compressedBase64 });
+            };
+            img.src = reader.result;
+        };
+        reader.readAsDataURL(file);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         await createProduct(formData);
@@ -36,14 +80,39 @@ export default function NewProductPage() {
             </header>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                <div className="flex flex-col items-center gap-4 mb-4">
+                    <div className="h-40 w-40 rounded-3xl bg-zinc-900 border-2 border-dashed border-zinc-700 flex items-center justify-center overflow-hidden relative group">
+                        {preview ? (
+                            <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                        ) : (
+                            <div className="flex flex-col items-center text-zinc-500">
+                                <Save size={32} className="mb-2 opacity-20" />
+                                <span className="text-xs font-bold uppercase tracking-widest">Sin Foto</span>
+                            </div>
+                        )}
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+                            <span className="text-white text-xs font-bold uppercase">Cambiar Foto</span>
+                        </div>
+                    </div>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest text-center">
+                        Haz clic en el recuadro para subir una foto real del producto
+                    </p>
+                </div>
+
                 <div>
-                    <label className="text-sm text-secondary mb-1 block">Nombre</label>
+                    <label className="text-sm text-secondary mb-1 block">Nombre del Producto</label>
                     <input name="name" required className="input" placeholder="Ej. Rimel Zen..." onChange={handleChange} />
                 </div>
 
                 <div>
                     <label className="text-sm text-secondary mb-1 block">Categoría</label>
-                    <input name="category" className="input" placeholder="Ej. Ojos" onChange={handleChange} />
+                    <input name="category" className="input" placeholder="Ej. Ojos, Rostro, Labios..." onChange={handleChange} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -68,21 +137,6 @@ export default function NewProductPage() {
                     </div>
                 </div>
 
-                <div>
-                    <label className="text-sm text-secondary mb-1 block">Emoji/Icono</label>
-                    <div className="flex gap-2">
-                        {['💄', '🧴', '👁️', '💅', '🧼'].map(emoji => (
-                            <button
-                                key={emoji}
-                                type="button"
-                                onClick={() => setFormData({ ...formData, image: emoji })}
-                                className={`btn ${formData.image === emoji ? 'btn-primary' : 'btn-outline'} p-2 text-2xl`}
-                            >
-                                {emoji}
-                            </button>
-                        ))}
-                    </div>
-                </div>
 
                 <button type="submit" className="btn btn-primary w-full py-3 mt-4 flex items-center justify-center gap-2">
                     <Save size={20} /> Guardar Producto

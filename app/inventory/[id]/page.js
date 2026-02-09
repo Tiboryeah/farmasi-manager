@@ -47,7 +47,13 @@ export default function ProductDetailPage({ params }) {
             </header>
 
             <div className="card p-4 mb-4 flex gap-4 items-center">
-                <div className="text-4xl bg-surface-hover p-4 rounded-xl">{product.image}</div>
+                <div className="h-20 w-20 bg-surface-hover rounded-xl overflow-hidden flex items-center justify-center">
+                    {product.image && product.image.startsWith('data:image') ? (
+                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                    ) : (
+                        <span className="text-4xl">{product.image || "📦"}</span>
+                    )}
+                </div>
                 <div>
                     <div className="text-sm text-secondary uppercase font-bold">{product.category}</div>
                     <div className="text-2xl font-bold text-white">{product.stock} un.</div>
