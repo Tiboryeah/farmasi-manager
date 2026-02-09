@@ -4,12 +4,30 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Package, ShoppingCart, FileText, LogOut, Settings } from "lucide-react";
-import { logoutAction } from "@/app/actions";
+import { Trash2 } from "lucide-react";
+import { logoutAction, resetDatabaseAction } from "@/app/actions";
 
 export default function Sidebar() {
     const pathname = usePathname();
 
     if (pathname.startsWith('/login')) return null;
+
+    const handleReset = async () => {
+        const firstConfirm = confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción borrará TODA la información: Ventas, Productos, Gastos e Historial.\n(Los usuarios no se borrarán)");
+
+        if (firstConfirm) {
+            const secondConfirm = confirm("❗ ¿ÚLTIMA ADVERTENCIA?\n\nEsta acción es irreversible y tu base de datos quedará limpia como si fuera nueva.");
+            if (secondConfirm) {
+                const res = await resetDatabaseAction();
+                if (res.success) {
+                    alert("Base de datos reiniciada con éxito.");
+                    window.location.reload();
+                } else {
+                    alert("Error: " + res.error);
+                }
+            }
+        }
+    };
 
     const navItems = [
         { name: "Inicio", href: "/", icon: LayoutDashboard },
@@ -49,7 +67,14 @@ export default function Sidebar() {
             {/* Spacer to push logout to bottom - Explicitly styled to avoid Tailwind issues */}
             <div style={{ flex: 1 }} />
 
-            <div className="pt-6 border-t border-white/5 mt-auto">
+            <div className="pt-6 border-t border-white/5 mt-auto flex flex-col gap-2">
+                <button
+                    className="flex items-center gap-4 w-full p-4 rounded-2xl text-zinc-600 font-bold hover:bg-orange-500/10 hover:text-orange-500 transition-all duration-300"
+                    onClick={handleReset}
+                >
+                    <Trash2 size={22} />
+                    <span className="tracking-tight">Limpiar Sistema</span>
+                </button>
                 <button
                     className="flex items-center gap-4 w-full p-4 rounded-2xl text-zinc-500 font-bold hover:bg-rose-500/10 hover:text-rose-500 transition-all duration-300"
                     onClick={async () => await logoutAction()}

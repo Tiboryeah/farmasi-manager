@@ -30,6 +30,31 @@ export async function deleteProduct(productId) {
   }
 }
 
+// --- DATABASE MAINTENANCE ---
+export async function resetDatabaseAction() {
+  try {
+    await connectDB();
+    // Delete all business data but KEEP users
+    await Promise.all([
+      Product.deleteMany({}),
+      Sale.deleteMany({}),
+      InventoryMovement.deleteMany({}),
+      Expense.deleteMany({})
+    ]);
+
+    // Seed basic products again
+    await initDB();
+
+    revalidatePath('/');
+    revalidatePath('/inventory');
+    revalidatePath('/reports');
+    return { success: true };
+  } catch (error) {
+    console.error("Error resetting database:", error);
+    return { error: "Error al reiniciar la base de datos" };
+  }
+}
+
 // --- AUTH ---
 export async function loginAction(formData) {
   const username = formData.get("username");
@@ -38,21 +63,25 @@ export async function loginAction(formData) {
   try {
     await connectDB();
 
-    // Ensure DB is initialized (seeded) if needed, lazy connect
-    // We can call initDB here if we want to be sure default products exist, 
-    // but for login, we mainly care about the User.
     const userCount = await User.countDocuments();
 
-    // First Run: Create Admin
+    // First Run: Create Test Accounts
     if (userCount === 0) {
-      const hashedPassword = await bcrypt.hash(password, 10);
-      await User.create({ username, password: hashedPassword });
-      await initDB(); // Seed products too if it's the very first run
+      // Create 'prueba' user with 'prueba' password
+      const hashedPrueba = await bcrypt.hash("prueba", 10);
+      await User.create({ username: "prueba", password: hashedPrueba });
+
+      // If the current login isn't prueba, create that one too
+      if (username !== "prueba") {
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await User.create({ username, password: hashedPassword });
+      }
+
+      await initDB();
     } else {
       // Check User
       const user = await User.findOne({ username });
       if (!user) {
-        // Simple delay to prevent timing attacks
         await new Promise(resolve => setTimeout(resolve, 500));
         return { error: "Usuario o contraseña inválidos" };
       }

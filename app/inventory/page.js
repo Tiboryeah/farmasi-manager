@@ -86,9 +86,15 @@ export default function InventoryPage() {
                                         )}
                                     </div>
 
-                                    <div className="flex-1 flex flex-col justify-between min-w-0 py-1">
+                                    <div className="flex-1 flex flex-col justify-between min-w-0 py-1 relative">
+                                        <button
+                                            onClick={(e) => handleDelete(e, product.id)}
+                                            className="absolute -top-1 -right-1 p-2 text-zinc-600 hover:text-danger hover:bg-danger/10 rounded-xl transition-all"
+                                        >
+                                            <Trash size={16} />
+                                        </button>
                                         <div>
-                                            <h3 className="font-bold text-xl truncate text-white tracking-tight">{product.name}</h3>
+                                            <h3 className="font-bold text-xl truncate text-white tracking-tight pr-8">{product.name}</h3>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">{product.category}</span>
                                             </div>
