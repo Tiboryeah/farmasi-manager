@@ -10,7 +10,7 @@ const outfit = Outfit({
 });
 
 export const metadata = {
-  title: "Farmasi Manager",
+  title: "DianiFarmi",
   description: "Control de ventas, stock y ganancia real",
   manifest: "/manifest.json",
 };

@@ -38,7 +38,7 @@ export default function RegisterPage() {
                         <UserPlus size={40} className="text-white" />
                     </div>
                     <h1 className="text-4xl font-black tracking-tight text-white mb-2">Crear <span className="text-blue-500 italic">Cuenta</span></h1>
-                    <p className="text-zinc-500 font-medium">Únete a Farmasi Manager Pro</p>
+                    <p className="text-zinc-500 font-medium">Únete a DianiFarmi Pro</p>
                 </div>
 
                 <div className="glass p-8 md:p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">

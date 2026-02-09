@@ -40,11 +40,11 @@ export default function Sidebar() {
         <aside className="sidebar">
             <div className="flex items-center gap-3 px-2 mb-12 flex-shrink-0">
                 <div className="h-12 w-12 rounded-2xl bg-[#f43f5e] flex items-center justify-center text-white text-xl font-black shadow-lg shadow-rose-500/20">
-                    FM
+                    DF
                 </div>
                 <div>
-                    <h1 className="font-bold text-xl tracking-tighter text-white">Farmasi</h1>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Manager Pro</p>
+                    <h1 className="font-bold text-xl tracking-tighter text-white">DianiFarmi</h1>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest">Pro</p>
                 </div>
             </div>
 

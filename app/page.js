@@ -53,7 +53,7 @@ export default function Home() {
           <p className="text-secondary text-sm">Resumen de rendimiento hoy</p>
         </div>
         <div className="h-12 w-12 rounded-2xl bg-gradient-primary flex items-center justify-center text-white font-bold shadow-glow">
-          FE
+          DF
         </div>
       </header>
 

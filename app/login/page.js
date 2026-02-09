@@ -38,7 +38,7 @@ export default function LoginPage() {
                     <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-primary shadow-glow mb-6 transform rotate-3 hover:rotate-0 transition-transform duration-500">
                         <ShieldCheck size={40} className="text-white" />
                     </div>
-                    <h1 className="text-4xl font-black tracking-tight text-white mb-2">Farmasi <span className="text-primary italic">Manager</span></h1>
+                    <h1 className="text-4xl font-black tracking-tight text-white mb-2">Diani<span className="text-primary italic">Farmi</span></h1>
                     <p className="text-zinc-500 font-medium">Panel de Gestión Profesional</p>
                 </div>
 
@@ -109,7 +109,7 @@ export default function LoginPage() {
                 </div>
 
                 <p className="mt-8 text-center text-zinc-600 text-sm font-medium">
-                    &copy; {new Date().getFullYear()} Farmasi System • v2.0
+                    &copy; {new Date().getFullYear()} DianiFarmi • v2.0
                 </p>
             </div>
 

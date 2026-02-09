@@ -1,6 +1,6 @@
 {
-    "name": "Farmasi Manager",
-    "short_name": "Farmasi",
+    "name": "DianiFarmi",
+    "short_name": "DianiFarmi",
     "description": "Control de ventas, stock y ganancia real",
     "start_url": "/",
     "display": "standalone",
