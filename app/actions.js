@@ -402,3 +402,41 @@ export async function downloadBackupAction() {
   const data = await getBackupData(session.userId);
   return JSON.parse(JSON.stringify(data));
 }
+
+export async function registerAction(formData) {
+  const username = formData.get("username").trim();
+  const password = formData.get("password");
+
+  if (!username || !password) {
+    return { error: "Todos los campos son obligatorios" };
+  }
+
+  try {
+    await connectDB();
+    const existingUser = await User.findOne({ username: { $regex: new RegExp(`^${username}$`, "i") } });
+    if (existingUser) {
+      return { error: "El nombre de usuario ya está en uso" };
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const user = await User.create({ username, password: hashedPassword });
+
+    // Seed initial products for the new user
+    await initDB(user._id);
+
+    // Auto-login
+    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+    const session = await new SignJWT({ username: user.username, userId: user._id.toString() })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("30d")
+      .sign(key);
+
+    (await cookies()).set("session", session, { expires, httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+  } catch (error) {
+    console.error("Registration Error:", error);
+    return { error: "Error al crear la cuenta" };
+  }
+
+  redirect('/');
+}

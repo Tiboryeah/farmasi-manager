@@ -10,7 +10,7 @@ import { logoutAction, resetDatabaseAction } from "@/app/actions";
 export default function Sidebar() {
     const pathname = usePathname();
 
-    if (pathname.startsWith('/login')) return null;
+    if (pathname.startsWith('/login') || pathname.startsWith('/register')) return null;
 
     const handleReset = async () => {
         const firstConfirm = confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción borrará TODA la información: Ventas, Productos, Gastos e Historial.\n(Los usuarios no se borrarán)");

@@ -8,7 +8,7 @@ import { logoutAction } from "@/app/actions";
 export default function BottomNav() {
   const pathname = usePathname();
 
-  if (pathname.startsWith('/login')) return null;
+  if (pathname.startsWith('/login') || pathname.startsWith('/register')) return null;
 
   const navItems = [
     { name: "Inicio", href: "/", icon: LayoutDashboard },
