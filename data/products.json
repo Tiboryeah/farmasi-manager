@@ -1,0 +1,32 @@
+[
+    {
+        "id": 1,
+        "name": "Labial VFX Elite Matte 04",
+        "category": "Labiales",
+        "cost": 120,
+        "price": 250,
+        "stock": 8,
+        "minStock": 5,
+        "image": "💄"
+    },
+    {
+        "id": 2,
+        "name": "Dr. C. Tuna Balsamo de Calendula",
+        "category": "Cuidado Piel",
+        "cost": 150,
+        "price": 380,
+        "stock": 3,
+        "minStock": 4,
+        "image": "🧴"
+    },
+    {
+        "id": 3,
+        "name": "Rimel Zen",
+        "category": "Ojos",
+        "cost": 85,
+        "price": 190,
+        "stock": 15,
+        "minStock": 5,
+        "image": "👁️"
+    }
+]
