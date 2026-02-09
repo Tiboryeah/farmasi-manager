@@ -105,9 +105,15 @@ export default function NewProductPage() {
                     </p>
                 </div>
 
-                <div>
-                    <label className="text-sm text-secondary mb-1 block">Nombre del Producto</label>
-                    <input name="name" required className="input" placeholder="Ej. Rimel Zen..." onChange={handleChange} />
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <label className="text-sm text-secondary mb-1 block">Nombre</label>
+                        <input name="name" required className="input" placeholder="Ej. Rimel Zen..." onChange={handleChange} />
+                    </div>
+                    <div>
+                        <label className="text-sm text-secondary mb-1 block">Código (Opcional)</label>
+                        <input name="code" className="input" placeholder="Ej. RZ-01" onChange={handleChange} />
+                    </div>
                 </div>
 
                 <div>

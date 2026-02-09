@@ -132,51 +132,80 @@ export default function ReportsPage() {
         }, []).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
     }, [sales]);
 
-    const handleDownload = () => {
+    const handleDownload = (period = 'history') => {
         try {
+            const now = new Date();
+            let filteredSales = [...sales];
+            let filteredExpenses = [...expenses];
+
+            if (period !== 'history') {
+                const cutoff = new Date();
+                if (period === 'day') {
+                    cutoff.setHours(0, 0, 0, 0); // Desde hoy a las 00:00
+                } else {
+                    const days = period === 'week' ? 7 : 30;
+                    cutoff.setDate(now.getDate() - days);
+                    cutoff.setHours(0, 0, 0, 0);
+                }
+
+                filteredSales = sales.filter(s => new Date(s.date) >= cutoff);
+                filteredExpenses = expenses.filter(e => new Date(e.date) >= cutoff);
+            }
+
             const wb = XLSX.utils.book_new();
-            const salesData = sales.map(s => ({
+
+            // 1. Hoja de Resumen de Ventas
+            const salesHeaders = ["ID", "Fecha", "Cliente", "Total", "Ganancia", "Metodo", "Items"];
+            const salesData = filteredSales.map(s => ({
                 ID: s.id.slice(-6),
                 Fecha: new Date(s.date).toLocaleDateString(),
+                Cliente: s.customerName || 'Consumidor Final',
                 Total: s.total,
                 Ganancia: s.profit,
-                Metodo: s.paymentMethod,
+                Metodo: s.paymentMethod || 'Efectivo',
                 Items: s.items?.length || 0
             }));
-            const wsSales = XLSX.utils.json_to_sheet(salesData);
+            const wsSales = XLSX.utils.json_to_sheet(salesData, { header: salesHeaders });
             XLSX.utils.book_append_sheet(wb, wsSales, "Resumen Ventas");
 
+            // 2. Hoja de Detalle de Productos
+            const productHeaders = ["ID_Venta", "Fecha", "Cliente", "Producto", "Cantidad", "Precio_Unit", "Costo_Unit", "Total_Linea", "Ganancia_Linea", "Metodo"];
             const productDetails = [];
-            sales.forEach(sale => {
+            filteredSales.forEach(sale => {
                 if (sale.items && Array.isArray(sale.items)) {
                     sale.items.forEach(item => {
                         productDetails.push({
                             ID_Venta: sale.id.slice(-6),
                             Fecha: new Date(sale.date).toLocaleDateString(),
+                            Cliente: sale.customerName || 'Consumidor Final',
                             Producto: item.name,
                             Cantidad: item.quantity,
                             Precio_Unit: item.unitPrice,
                             Costo_Unit: item.unitCost,
                             Total_Linea: item.unitPrice * item.quantity,
-                            Ganancia_Linea: (item.unitPrice - item.unitCost) * item.quantity
+                            Ganancia_Linea: (item.unitPrice - item.unitCost) * item.quantity,
+                            Metodo: sale.paymentMethod || 'Efectivo'
                         });
                     });
                 }
             });
-            const wsProducts = XLSX.utils.json_to_sheet(productDetails);
+            const wsProducts = XLSX.utils.json_to_sheet(productDetails, { header: productHeaders });
             XLSX.utils.book_append_sheet(wb, wsProducts, "Detalle Productos");
 
-            const expensesData = expenses.map(e => ({
+            // 3. Hoja de Gastos
+            const expenseHeaders = ["ID", "Fecha", "Categoria", "Monto", "Nota"];
+            const expensesData = filteredExpenses.map(e => ({
                 ID: e.id.slice(-6),
                 Fecha: new Date(e.date).toLocaleDateString(),
                 Categoria: e.category,
                 Monto: e.amount,
                 Nota: e.note
             }));
-            const wsExpenses = XLSX.utils.json_to_sheet(expensesData);
+            const wsExpenses = XLSX.utils.json_to_sheet(expensesData, { header: expenseHeaders });
             XLSX.utils.book_append_sheet(wb, wsExpenses, "Gastos");
 
-            XLSX.writeFile(wb, `Reporte_Farmasi_Completo_${new Date().toISOString().split('T')[0]}.xlsx`);
+            const periodLabel = period === 'day' ? 'Hoy' : period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : 'Completo';
+            XLSX.writeFile(wb, `DianiFarmi-Reporte-${periodLabel}-${new Date().toISOString().split('T')[0]}.xlsx`);
         } catch (e) {
             console.error(e);
             alert("Error al generar reporte: " + e.message);
@@ -224,41 +253,63 @@ export default function ReportsPage() {
                             onClick={() => setTimeFrame('week')}
                             className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'week' ? 'bg-primary text-white shadow-glow' : 'text-secondary hover:text-white'}`}
                         >
-                            7 Días
+                            Vista Semanal
                         </button>
                         <button
                             onClick={() => setTimeFrame('month')}
                             className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'month' ? 'bg-primary text-white shadow-glow' : 'text-secondary hover:text-white'}`}
                         >
-                            30 Días
+                            Mensual
                         </button>
                         <button
                             onClick={() => setTimeFrame('year')}
                             className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'year' ? 'bg-primary text-white shadow-glow' : 'text-secondary hover:text-white'}`}
                         >
-                            Año
+                            Anual
                         </button>
                     </div>
 
-                    <div className="flex gap-2">
-                        <button
-                            onClick={handleDownload}
-                            className="btn btn-secondary rounded-2xl flex items-center gap-2"
-                        >
-                            <Download size={18} />
-                            <span>Excel</span>
-                        </button>
-                        <button
-                            onClick={handleDownloadBackup}
-                            disabled={isBackingUp}
-                            className={`btn rounded-2xl flex items-center gap-2 ${isBackingUp ? 'opacity-50 cursor-not-allowed bg-zinc-800' : 'bg-success/10 text-success border border-success/20 hover:bg-success/20'}`}
-                        >
-                            <ShieldCheck size={18} />
-                            <span>{isBackingUp ? 'Procesando...' : 'Backup Nube'}</span>
-                        </button>
-                    </div>
+                    <button
+                        onClick={handleDownloadBackup}
+                        disabled={isBackingUp}
+                        className={`btn h-12 rounded-2xl flex items-center gap-2 px-6 ${isBackingUp ? 'opacity-50 cursor-not-allowed bg-zinc-800' : 'bg-success/10 text-success border border-success/20 hover:bg-success/20'}`}
+                    >
+                        <ShieldCheck size={18} />
+                        <span>{isBackingUp ? 'Procesando...' : 'Respaldo Nube'}</span>
+                    </button>
                 </div>
             </header>
+
+            <section className="card p-6 bg-gradient-to-br from-zinc-900 to-black border-white/5">
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="h-12 w-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
+                        <Download size={24} />
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-white">Exportación de Datos</h2>
+                        <p className="text-sm text-zinc-500 font-medium">Descarga tus reportes detallados en formato Excel</p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <button onClick={() => handleDownload('day')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-zinc-900 border border-white/5 hover:border-primary/50 hover:bg-zinc-800 transition-all group">
+                        <Calendar size={24} className="text-zinc-500 group-hover:text-primary" />
+                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-400 group-hover:text-white">Ventas del Día</span>
+                    </button>
+                    <button onClick={() => handleDownload('week')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-zinc-900 border border-white/5 hover:border-primary/50 hover:bg-zinc-800 transition-all group">
+                        <TrendingUp size={24} className="text-zinc-500 group-hover:text-primary" />
+                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-400 group-hover:text-white">Esta Semana</span>
+                    </button>
+                    <button onClick={() => handleDownload('month')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-zinc-900 border border-white/5 hover:border-primary/50 hover:bg-zinc-800 transition-all group">
+                        <BarChart3 size={24} className="text-zinc-500 group-hover:text-primary" />
+                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-400 group-hover:text-white">Todo el Mes</span>
+                    </button>
+                    <button onClick={() => handleDownload('history')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all group shadow-glow-sm">
+                        <History size={24} className="text-primary" />
+                        <span className="text-xs font-black uppercase tracking-tighter text-primary group-hover:text-white">Historial Total</span>
+                    </button>
+                </div>
+            </section>
 
             <div className="stats-grid">
                 <div className="card stat-card border-l-4 border-l-blue-500">
@@ -424,11 +475,18 @@ export default function ReportsPage() {
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
                                         <span className="font-bold text-lg">${sale.total.toFixed(0)}</span>
-                                        <span className="px-1.5 py-0.5 rounded-md bg-zinc-800 text-[8px] font-black uppercase text-secondary">#{sale.id.slice(-4)}</span>
+                                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                                            {sale.paymentMethod || 'Efectivo'}
+                                        </span>
                                     </div>
-                                    <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
-                                        {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                    </span>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm font-bold text-white truncate max-w-[120px]">
+                                            {sale.customerName || "Venta Rápida"}
+                                        </span>
+                                        <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
+                                            {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">

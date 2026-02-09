@@ -167,6 +167,7 @@ export async function createProduct(data) {
   const product = await Product.create({
     userId: session.userId,
     name: data.name,
+    code: data.code || '',
     category: data.category || 'General',
     cost: parseFloat(data.cost),
     price: parseFloat(data.price),
@@ -230,7 +231,7 @@ export async function getAllSales() {
   return serialize(sales.map(s => ({ ...s, id: s._id.toString() })));
 }
 
-export async function createSale(cart) {
+export async function createSale(cart, customerName = 'Consumidor Final', paymentMethod = 'Efectivo') {
   const session = await getSession();
   if (!session) return null;
   await connectDB();
@@ -273,15 +274,17 @@ export async function createSale(cart) {
 
   const sale = await Sale.create({
     userId: session.userId,
+    customerName,
     total,
     profit: totalProfit,
     items: saleItems,
     date: new Date(),
-    paymentMethod: 'Efectivo'
+    paymentMethod
   });
 
   revalidatePath('/');
   revalidatePath('/inventory');
+  revalidatePath('/reports');
   return serialize(sale);
 }
 

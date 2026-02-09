@@ -55,7 +55,7 @@ export default function ProductDetailPage({ params }) {
                     )}
                 </div>
                 <div>
-                    <div className="text-sm text-secondary uppercase font-bold">{product.category}</div>
+                    <div className="text-sm text-secondary uppercase font-bold">{product.category} {product.code && `• ${product.code}`}</div>
                     <div className="text-2xl font-bold text-white">{product.stock} un.</div>
                     <div className="text-xs text-secondary">Stock Mínimo: {product.min_stock}</div>
                 </div>

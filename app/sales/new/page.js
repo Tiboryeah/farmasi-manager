@@ -12,6 +12,8 @@ export default function NewSalePage() {
     const [cart, setCart] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [products, setProducts] = useState([]);
+    const [customerName, setCustomerName] = useState("");
+    const [paymentMethod, setPaymentMethod] = useState("Efectivo");
 
     // Load products on mount
     useEffect(() => {
@@ -50,7 +52,7 @@ export default function NewSalePage() {
 
     const handleConfirmSale = async () => {
         try {
-            await createSale(cart);
+            await createSale(cart, customerName || "Consumidor Final", paymentMethod);
             setStep(3); // Success Screen
         } catch (e) {
             alert("Error al guardar venta: " + e.message);
@@ -129,9 +131,40 @@ export default function NewSalePage() {
                     <h1 className="text-xl font-bold">Ajustar Precios</h1>
                 </header>
 
-                <p className="text-sm text-secondary mb-4">
-                    Personaliza el precio final para esta venta.
-                </p>
+                <div className="flex flex-col gap-4 mb-6">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-1">Cliente</label>
+                        <input
+                            className="input bg-zinc-900/50 border-white/5 h-12"
+                            placeholder="Nombre del cliente (Opcional)"
+                            value={customerName}
+                            onChange={e => setCustomerName(e.target.value)}
+                        />
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-1">Método de Pago</label>
+                        <div className="grid grid-cols-2 gap-2 glass p-1 rounded-2xl">
+                            <button
+                                onClick={() => setPaymentMethod("Efectivo")}
+                                className={`py-2.5 rounded-xl text-sm font-black transition-all ${paymentMethod === 'Efectivo' ? 'bg-primary text-white shadow-glow' : 'text-zinc-500'}`}
+                            >
+                                Efectivo
+                            </button>
+                            <button
+                                onClick={() => setPaymentMethod("Tarjeta")}
+                                className={`py-2.5 rounded-xl text-sm font-black transition-all ${paymentMethod === 'Tarjeta' ? 'bg-blue-600 text-white shadow-glow' : 'text-zinc-500'}`}
+                            >
+                                Tarjeta
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500">Resumen de Productos</h3>
+                    <div className="text-[10px] text-zinc-600 font-medium">Puedes ajustar los precios aquí</div>
+                </div>
 
                 <div className="flex flex-col gap-4 overflow-y-auto flex-1">
                     {cart.map(item => (
@@ -196,13 +229,30 @@ export default function NewSalePage() {
 
     return (
         <div className="flex flex-col items-center justify-center h-[80vh] text-center px-4">
-            <div className="h-20 w-20 rounded-full bg-success/20 text-success flex items-center justify-center mb-6">
-                <DollarSign size={40} />
+            <h2 className="text-2xl font-bold mb-2 text-white">¡Venta Exitosa!</h2>
+
+            <div className="glass p-6 rounded-3xl w-full mb-8 text-left space-y-4">
+                <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                    <span className="text-zinc-500 text-xs font-black uppercase tracking-widest">Total</span>
+                    <span className="text-xl font-black text-white">${cartTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                    <span className="text-zinc-500 text-xs font-black uppercase tracking-widest">Cliente</span>
+                    <span className="font-bold text-white text-sm">{customerName || "Consumidor Final"}</span>
+                </div>
+                <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                    <span className="text-zinc-500 text-xs font-black uppercase tracking-widest">Pago</span>
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${paymentMethod === 'Tarjeta' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                        {paymentMethod}
+                    </span>
+                </div>
+                <div className="flex justify-between items-center">
+                    <span className="text-zinc-500 text-xs font-black uppercase tracking-widest">Fecha</span>
+                    <span className="text-[10px] text-zinc-400 font-bold uppercase">
+                        {new Date().toLocaleString('es-MX', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                </div>
             </div>
-            <h2 className="text-2xl font-bold mb-2">¡Venta Exitosa!</h2>
-            <p className="text-secondary mb-8">
-                La venta por <strong className="text-white">${cartTotal.toFixed(2)}</strong> se guardó y el stock fue actualizado.
-            </p>
 
             <div className="flex flex-col gap-3 w-full">
                 <Link href="/" className="btn btn-primary w-full py-3">Volver al Inicio</Link>

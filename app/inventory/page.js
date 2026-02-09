@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, AlertCircle, Trash, SearchX, Package, ArrowUpRight } from "lucide-react";
+import { Search, Plus, AlertCircle, Trash, SearchX, Package, ArrowUpRight, Download } from "lucide-react";
 import { getProducts, deleteProduct } from "@/app/actions";
 import Link from "next/link";
+import * as XLSX from 'xlsx';
 
 export default function InventoryPage() {
     const [products, setProducts] = useState([]);
@@ -35,6 +36,32 @@ export default function InventoryPage() {
         }
     };
 
+    const handleExport = () => {
+        try {
+            const headers = ["ID Sistema", "Código Referencia", "Nombre", "Categoría", "Costo", "Precio", "Stock", "Stock Mínimo", "Estado", "Última Actualización"];
+            const exportData = products.map(p => ({
+                "ID Sistema": p.id || 'N/A',
+                "Código Referencia": p.code || 'N/A',
+                Nombre: p.name,
+                Categoría: p.category,
+                Costo: p.cost,
+                Precio: p.price,
+                Stock: p.stock,
+                'Stock Mínimo': p.minStock,
+                Estado: p.stock <= p.minStock ? 'BAJO STOCK' : 'OK',
+                'Última Actualización': p.updatedAt ? new Date(p.updatedAt).toLocaleString() : 'N/A'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData, { header: headers });
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Inventario");
+            XLSX.writeFile(wb, `dianifarmi-inventario-${new Date().toISOString().split('T')[0]}.xlsx`);
+        } catch (error) {
+            console.error("Export failed:", error);
+            alert("Error al exportar el inventario");
+        }
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -48,9 +75,18 @@ export default function InventoryPage() {
                     <h1 className="text-4xl font-black bg-gradient-to-r from-white to-zinc-500 bg-clip-text text-transparent tracking-tighter">Inventario</h1>
                     <p className="text-zinc-500 text-sm font-medium mt-1">Gestiona tus productos y stock en tiempo real</p>
                 </div>
-                <Link href="/products/new" className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-glow hover:scale-110 transition-all duration-300">
-                    <Plus size={28} />
-                </Link>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={handleExport}
+                        className="h-14 w-14 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center text-zinc-400 hover:text-white hover:bg-zinc-800 transition-all duration-300 shadow-xl"
+                        title="Exportar a Excel"
+                    >
+                        <Download size={24} />
+                    </button>
+                    <Link href="/products/new" className="h-14 w-14 rounded-2xl bg-primary flex items-center justify-center text-white shadow-glow hover:scale-110 transition-all duration-300">
+                        <Plus size={28} />
+                    </Link>
+                </div>
             </header>
 
             <div className="relative group">
@@ -97,6 +133,12 @@ export default function InventoryPage() {
                                             <h3 className="font-bold text-xl truncate text-white tracking-tight pr-8">{product.name}</h3>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <span className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">{product.category}</span>
+                                                {product.code && (
+                                                    <>
+                                                        <span className="text-zinc-700">•</span>
+                                                        <span className="text-[10px] text-primary font-black uppercase tracking-widest">{product.code}</span>
+                                                    </>
+                                                )}
                                             </div>
                                         </div>
 
