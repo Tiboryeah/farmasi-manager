@@ -6,15 +6,19 @@ const SECRET_KEY = process.env.JWT_SECRET || "secret-key-change-in-prod";
 const key = new TextEncoder().encode(SECRET_KEY);
 
 export async function middleware(request) {
+    const { pathname } = request.nextUrl;
     const session = request.cookies.get('session')?.value;
-    const path = request.nextUrl.pathname;
 
-    // Paths that don't need authentication
-    if (path.startsWith('/login') || path.startsWith('/register') || path.startsWith('/_next') || path.startsWith('/static') || path === '/favicon.ico' || path === '/manifest.json') {
+    // 1. PUBLIC PATHS: Always allow
+    const publicPaths = ['/login', '/register', '/manifest.json', '/favicon.ico', '/vercel.svg'];
+    const isPublicPath = publicPaths.some(path => pathname === path || pathname.startsWith(path));
+
+    // Also allow static assets
+    if (isPublicPath || pathname.startsWith('/_next') || pathname.startsWith('/static')) {
         return NextResponse.next();
     }
 
-    // Verify session
+    // 2. VERIFY SESSION
     let isAuthenticated = false;
     if (session) {
         try {
@@ -25,7 +29,7 @@ export async function middleware(request) {
         }
     }
 
-    // If not authenticated, redirect to login
+    // 3. REDIRECTS
     if (!isAuthenticated) {
         return NextResponse.redirect(new URL('/login', request.url));
     }
@@ -34,11 +38,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-    matcher: [
-        /*
-         * Match all request paths except for:
-         * - api, _next/static, _next/image, favicon.ico, login, register, manifest.json
-         */
-        '/((?!api|_next/static|_next/image|favicon.ico|login|register|manifest.json).*)',
-    ],
+    matcher: ['/((?!api|_next/static|_next/image|favicon.ico|manifest.json|vercel.svg).*)'],
 };
