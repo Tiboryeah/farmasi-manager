@@ -21,7 +21,7 @@ export default function NewSalePage() {
         getProducts().then(setProducts);
     }, []);
 
-    const categories = ["Todas", ...new Set(products.map(p => p.category))].filter(Boolean);
+    const categories = ["Todas", ...new Set(products.map(p => p.category).filter(Boolean).sort())];
 
     const filteredProducts = products.filter(p => !p.isTest).filter(p => {
         const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());

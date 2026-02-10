@@ -34,7 +34,7 @@ export default function InventoryPage() {
         setFilteredProducts(filtered);
     }, [searchTerm, products, activeTab, selectedCategory]);
 
-    const categories = ["Todas", ...new Set(products.filter(p => (p.type || 'product') === activeTab).map(p => p.category))].filter(Boolean);
+    const categories = ["Todas", ...new Set(products.filter(p => (p.type || 'product') === activeTab).map(p => p.category).filter(Boolean).sort())];
 
     const handleDelete = async (e, id) => {
         e.preventDefault();

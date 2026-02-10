@@ -143,7 +143,7 @@ export async function getProducts(search = '') {
   if (search) {
     query.name = { $regex: search, $options: 'i' };
   }
-  const products = await Product.find(query).sort({ createdAt: -1 }).lean();
+  const products = await Product.find(query).sort({ name: 1 }).lean();
   return serialize(products.map(p => ({ ...p, id: p._id.toString() })));
 }
 
