@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
-import { createProduct } from "@/app/actions";
-import { ChevronLeft, Save } from "lucide-react";
+import { createProduct, getProduct } from "@/app/actions";
+import { ChevronLeft, Save, Copy } from "lucide-react";
 import Link from "next/link";
 
 function NewProductForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const defaultType = searchParams.get('type') || 'product';
+    const cloneId = searchParams.get('cloneId');
 
     const [formData, setFormData] = useState({
         name: "",
@@ -31,6 +32,29 @@ function NewProductForm() {
     const handleAddAttribute = () => {
         setAttributes([...attributes, { name: '', value: '' }]);
     };
+
+    // Load data if cloning
+    useEffect(() => {
+        if (cloneId) {
+            getProduct(cloneId).then(data => {
+                if (data) {
+                    setFormData(prev => ({
+                        ...prev,
+                        name: `${data.name} (Variante)`,
+                        category: data.category,
+                        cost: data.cost,
+                        price: data.price,
+                        stock: '', // Reset stock for new variant
+                        minStock: data.minStock,
+                        image: data.image,
+                        type: data.type
+                    }));
+                    setAttributes(data.attributes || []);
+                    if (data.image) setPreview(data.image);
+                }
+            });
+        }
+    }, [cloneId]);
 
     const handleAttributeChange = (index, field, value) => {
         const newAttributes = [...attributes];
@@ -97,35 +121,38 @@ function NewProductForm() {
     return (
         <div className="flex flex-col h-full pb-20">
             <header className="flex items-center gap-3 py-4 mb-2">
-                <Link href="/inventory" className="btn btn-ghost p-1"><ChevronLeft /></Link>
-                <h1 className="text-xl font-bold">Nuevo Producto</h1>
+                <Link href="/inventory" className="btn btn-ghost p-1 hover:bg-zinc-100 rounded-full text-zinc-500"><ChevronLeft /></Link>
+                <div className="flex-1">
+                    <h1 className="text-xl font-bold text-zinc-900">{cloneId ? 'Nueva Variante' : 'Nuevo Producto'}</h1>
+                    {cloneId && <p className="text-xs text-zinc-500">Copiando datos de producto existente</p>}
+                </div>
             </header>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex gap-2 p-1 bg-zinc-900 rounded-xl mb-4">
+                <div className="flex gap-2 p-1 bg-zinc-100 rounded-xl mb-4 border border-zinc-200">
                     <button
                         type="button"
                         onClick={() => setFormData({ ...formData, type: 'product' })}
-                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'product' ? 'bg-zinc-800 text-white shadow-lg' : 'text-zinc-500'}`}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'product' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200' : 'text-zinc-500 hover:text-zinc-700'}`}
                     >
                         Producto para Venta
                     </button>
                     <button
                         type="button"
                         onClick={() => setFormData({ ...formData, type: 'sample' })}
-                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'sample' ? 'bg-primary text-white shadow-lg' : 'text-zinc-500'}`}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'sample' ? 'bg-primary text-white shadow-md' : 'text-zinc-500 hover:text-zinc-700'}`}
                     >
                         Muestra (Gasto)
                     </button>
                 </div>
 
                 <div className="flex flex-col items-center gap-4 mb-4">
-                    <div className="h-40 w-40 rounded-3xl bg-zinc-900 border-2 border-dashed border-zinc-700 flex items-center justify-center overflow-hidden relative group">
+                    <div className="h-40 w-40 rounded-3xl bg-zinc-50 border-2 border-dashed border-zinc-300 flex items-center justify-center overflow-hidden relative group">
                         {preview ? (
                             <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
-                            <div className="flex flex-col items-center text-zinc-500">
-                                <Save size={32} className="mb-2 opacity-20" />
+                            <div className="flex flex-col items-center text-zinc-400">
+                                <Save size={32} className="mb-2 opacity-30" />
                                 <span className="text-xs font-bold uppercase tracking-widest">Sin Foto</span>
                             </div>
                         )}
@@ -146,49 +173,49 @@ function NewProductForm() {
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-sm text-secondary mb-1 block">Nombre</label>
-                        <input name="name" required className="input" placeholder="Ej. Rimel Zen..." onChange={handleChange} />
+                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Nombre</label>
+                        <input name="name" required className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="Ej. Rimel Zen..." onChange={handleChange} />
                     </div>
                     <div>
-                        <label className="text-sm text-secondary mb-1 block">Código (Opcional)</label>
-                        <input name="code" className="input" placeholder="Ej. RZ-01" onChange={handleChange} />
+                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Código (Opcional)</label>
+                        <input name="code" className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="Ej. RZ-01" onChange={handleChange} />
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-sm text-secondary mb-1 block">Categoría</label>
-                    <input name="category" className="input" placeholder="Ej. Ojos, Rostro, Labios..." onChange={handleChange} />
+                    <label className="text-sm font-bold text-zinc-600 mb-1 block">Categoría</label>
+                    <input name="category" className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="Ej. Ojos, Rostro, Labios..." onChange={handleChange} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-sm text-secondary mb-1 block">Costo ($)</label>
-                        <input name="cost" type="number" step="0.5" required className="input" placeholder="0.00" onChange={handleChange} />
+                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Costo ($)</label>
+                        <input name="cost" type="number" step="0.5" required className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="0.00" onChange={handleChange} />
                     </div>
                     <div>
-                        <label className="text-sm text-secondary mb-1 block">Precio Sugerido ($)</label>
-                        <input name="price" type="number" step="0.5" required className="input" placeholder="0.00" onChange={handleChange} />
+                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Precio Sugerido ($)</label>
+                        <input name="price" type="number" step="0.5" required className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="0.00" onChange={handleChange} />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-sm text-secondary mb-1 block">Stock Inicial</label>
-                        <input name="stock" type="number" required className="input" placeholder="0" onChange={handleChange} />
+                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Stock Inicial</label>
+                        <input name="stock" type="number" required className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="0" onChange={handleChange} />
                     </div>
                     <div>
-                        <label className="text-sm text-secondary mb-1 block">Stock Mínimo</label>
-                        <input name="minStock" type="number" className="input" defaultValue="5" onChange={handleChange} />
+                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Stock Mínimo</label>
+                        <input name="minStock" type="number" className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" defaultValue="5" onChange={handleChange} />
                     </div>
                 </div>
 
                 {/* Attributes Section */}
-                <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
                     <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-bold text-secondary">Atributos Adicionales</label>
-                        <button type="button" onClick={handleAddAttribute} className="text-xs btn btn-sm btn-ghost text-primary">+ Añadir</button>
+                        <label className="text-sm font-bold text-zinc-700">Atributos Adicionales</label>
+                        <button type="button" onClick={handleAddAttribute} className="text-xs btn btn-sm btn-ghost text-primary hover:bg-primary/10">+ Añadir</button>
                     </div>
-                    {attributes.length === 0 && <p className="text-xs text-zinc-600 italic">Sin atributos (ej. Color, Sabor)</p>}
+                    {attributes.length === 0 && <p className="text-xs text-zinc-400 italic">Sin atributos (ej. Color, Sabor)</p>}
                     <div className="flex flex-col gap-2">
                         {attributes.map((attr, index) => (
                             <div key={index} className="flex gap-2">
@@ -196,32 +223,32 @@ function NewProductForm() {
                                     placeholder="Nombre (ej. Color)"
                                     value={attr.name}
                                     onChange={(e) => handleAttributeChange(index, 'name', e.target.value)}
-                                    className="input text-xs flex-1"
+                                    className="input text-xs flex-1 bg-white border-zinc-200 text-zinc-900 shadow-sm"
                                 />
                                 <input
                                     placeholder="Valor (ej. Rojo)"
                                     value={attr.value}
                                     onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
-                                    className="input text-xs flex-1"
+                                    className="input text-xs flex-1 bg-white border-zinc-200 text-zinc-900 shadow-sm"
                                 />
-                                <button type="button" onClick={() => handleRemoveAttribute(index)} className="btn btn-square btn-xs btn-ghost text-error">✕</button>
+                                <button type="button" onClick={() => handleRemoveAttribute(index)} className="btn btn-square btn-xs btn-ghost text-red-500 hover:bg-red-50">✕</button>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Test Copy Checkbox */}
-                <div className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-xl border border-zinc-800">
+                <div className="flex items-center gap-3 p-3 bg-zinc-50 rounded-xl border border-zinc-200">
                     <input
                         type="checkbox"
                         id="testCopy"
                         checked={createTestCopy}
                         onChange={(e) => setCreateTestCopy(e.target.checked)}
-                        className="checkbox checkbox-primary"
+                        className="checkbox checkbox-primary border-zinc-300"
                     />
-                    <label htmlFor="testCopy" className="text-sm cursor-pointer select-none">
+                    <label htmlFor="testCopy" className="text-sm cursor-pointer select-none text-zinc-700">
                         Crear copia para <b>Inventario de Pruebas</b>
-                        <span className="block text-xs text-secondary mt-0.5">Se creará un producto adicional marcado como "Muestra" con stock 0.</span>
+                        <span className="block text-xs text-zinc-500 mt-0.5">Se creará un producto adicional marcado como "Muestra" con stock 0.</span>
                     </label>
                 </div>
 

@@ -26,35 +26,35 @@ export default function SalesHistoryPage() {
         <div className="flex flex-col gap-6 animate-fade-in pb-10">
             <header className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-500 bg-clip-text text-transparent">Historial de Ventas</h1>
-                    <p className="text-secondary text-sm">Registro cronológico de pedidos</p>
+                    <h1 className="text-3xl font-bold text-[var(--color-text-main)]">Historial de Ventas</h1>
+                    <p className="text-[var(--color-text-muted)] text-sm">Registro cronológico de pedidos</p>
                 </div>
-                <Link href="/sales/new" className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-glow hover:scale-110 transition-transform">
+                <Link href="/sales/new" className="h-12 w-12 rounded-2xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/30 hover:scale-110 transition-transform">
                     <Plus size={24} />
                 </Link>
             </header>
 
             <div className="flex flex-col gap-4">
                 {sales.length === 0 ? (
-                    <div className="card py-20 flex flex-col items-center text-zinc-600 dashed border-zinc-800">
-                        <History size={64} className="opacity-10 mb-4" />
+                    <div className="card py-20 flex flex-col items-center text-[var(--color-text-muted)] dashed border border-[var(--color-glass-border)] border-dashed rounded-2xl">
+                        <History size={64} className="opacity-20 mb-4" />
                         <p className="text-lg font-medium">No hay ventas registradas</p>
-                        <Link href="/sales/new" className="text-primary mt-2 text-sm font-bold">Crear primera venta</Link>
+                        <Link href="/sales/new" className="text-primary mt-2 text-sm font-bold hover:underline">Crear primera venta</Link>
                     </div>
                 ) : (
                     sales.map((sale) => (
-                        <div key={sale.id} className="card p-5 group hover:bg-zinc-900/50 transition-all">
+                        <div key={sale.id} className="card p-5 group hover:bg-[var(--color-surface-hover)] transition-all bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-sm rounded-xl">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                 <div className="flex items-center gap-4">
-                                    <div className="h-14 w-14 rounded-2xl bg-zinc-800 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
+                                    <div className="h-14 w-14 rounded-2xl bg-[var(--color-surface-highlight)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform border border-[var(--color-glass-border)]">
                                         🛍️
                                     </div>
                                     <div>
                                         <div className="flex items-center gap-2">
-                                            <h3 className="font-bold text-lg text-white">Venta #{sale.id.slice(-6)}</h3>
-                                            <span className="px-2 py-0.5 rounded-md bg-success/10 text-success text-[10px] font-black uppercase">Completada</span>
+                                            <h3 className="font-bold text-lg text-[var(--color-text-main)]">Venta #{sale.id.slice(-6)}</h3>
+                                            <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-highlight)] text-emerald-500 text-[10px] font-black uppercase border border-emerald-100">Completada</span>
                                         </div>
-                                        <div className="text-xs text-secondary flex items-center gap-2 mt-1">
+                                        <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-2 mt-1">
                                             <Calendar size={12} />
                                             {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}
                                             <span className="opacity-30">•</span>
@@ -63,18 +63,18 @@ export default function SalesHistoryPage() {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between sm:justify-end gap-6 sm:text-right border-t sm:border-t-0 border-white/5 pt-4 sm:pt-0">
+                                <div className="flex items-center justify-between sm:justify-end gap-6 sm:text-right border-t sm:border-t-0 border-[var(--color-glass-border)] pt-4 sm:pt-0">
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] text-secondary font-black uppercase tracking-widest">Inversión</span>
-                                        <span className="font-bold text-zinc-400">$ {(sale.total - sale.profit).toFixed(2)}</span>
+                                        <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Inversión</span>
+                                        <span className="font-bold text-[var(--color-text-muted)]">$ {(sale.total - sale.profit).toFixed(2)}</span>
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] text-success font-black uppercase tracking-widest">Ganancia</span>
-                                        <span className="font-bold text-success text-xl">+${sale.profit.toFixed(2)}</span>
+                                        <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Ganancia</span>
+                                        <span className="font-bold text-emerald-500 text-xl">+${sale.profit.toFixed(2)}</span>
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-[10px] text-zinc-500 font-black uppercase tracking-widest">Total</span>
-                                        <span className="font-black text-2xl text-white">${sale.total.toFixed(2)}</span>
+                                        <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Total</span>
+                                        <span className="font-black text-2xl text-[var(--color-text-main)]">${sale.total.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>

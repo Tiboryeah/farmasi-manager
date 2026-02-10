@@ -257,27 +257,27 @@ export default function ReportsPage() {
         <div className="flex flex-col gap-12 animate-fade-in w-full pb-20">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-500 bg-clip-text text-transparent">Reportes Financieros</h1>
-                    <p className="text-secondary text-sm mt-1">Análisis profundo del rendimiento de tu negocio</p>
+                    <h1 className="text-3xl font-bold text-zinc-900">Reportes Financieros</h1>
+                    <p className="text-zinc-500 text-sm mt-1">Análisis profundo del rendimiento de tu negocio</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="glass p-1 rounded-2xl flex">
+                    <div className="bg-white border border-zinc-200 p-1 rounded-2xl flex shadow-sm">
                         <button
                             onClick={() => setTimeFrame('week')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'week' ? 'bg-primary text-white shadow-glow' : 'text-secondary hover:text-white'}`}
+                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'week' ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900'}`}
                         >
                             Vista Semanal
                         </button>
                         <button
                             onClick={() => setTimeFrame('month')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'month' ? 'bg-primary text-white shadow-glow' : 'text-secondary hover:text-white'}`}
+                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'month' ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900'}`}
                         >
                             Mensual
                         </button>
                         <button
                             onClick={() => setTimeFrame('year')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'year' ? 'bg-primary text-white shadow-glow' : 'text-secondary hover:text-white'}`}
+                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'year' ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900'}`}
                         >
                             Anual
                         </button>
@@ -286,7 +286,7 @@ export default function ReportsPage() {
                     <button
                         onClick={handleDownloadBackup}
                         disabled={isBackingUp}
-                        className={`btn h-12 rounded-2xl flex items-center gap-2 px-6 ${isBackingUp ? 'opacity-50 cursor-not-allowed bg-zinc-800' : 'bg-success/10 text-success border border-success/20 hover:bg-success/20'}`}
+                        className={`btn h-12 rounded-2xl flex items-center gap-2 px-6 shadow-sm ${isBackingUp ? 'opacity-50 cursor-not-allowed bg-zinc-100 text-zinc-400' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100'}`}
                     >
                         <ShieldCheck size={18} />
                         <span>{isBackingUp ? 'Procesando...' : 'Respaldo Nube'}</span>
@@ -294,121 +294,121 @@ export default function ReportsPage() {
                 </div>
             </header>
 
-            <section className="card p-6 bg-gradient-to-br from-zinc-900 to-black border-white/5">
+            <section className="card p-6 bg-zinc-900 text-white border-zinc-800 shadow-xl rounded-2xl">
                 <div className="flex items-center gap-4 mb-6">
-                    <div className="h-12 w-12 rounded-2xl bg-primary/20 flex items-center justify-center text-primary">
+                    <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center text-white">
                         <Download size={24} />
                     </div>
                     <div>
                         <h2 className="text-xl font-bold text-white">Exportación de Datos</h2>
-                        <p className="text-sm text-zinc-500 font-medium">Descarga tus reportes detallados en formato Excel</p>
+                        <p className="text-sm text-zinc-400 font-medium">Descarga tus reportes detallados en formato Excel</p>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button onClick={() => handleDownload('day')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-zinc-900 border border-white/5 hover:border-primary/50 hover:bg-zinc-800 transition-all group">
-                        <Calendar size={24} className="text-zinc-500 group-hover:text-primary" />
-                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-400 group-hover:text-white">Ventas del Día</span>
+                    <button onClick={() => handleDownload('day')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+                        <Calendar size={24} className="text-zinc-400 group-hover:text-white" />
+                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-500 group-hover:text-white">Ventas del Día</span>
                     </button>
-                    <button onClick={() => handleDownload('week')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-zinc-900 border border-white/5 hover:border-primary/50 hover:bg-zinc-800 transition-all group">
-                        <TrendingUp size={24} className="text-zinc-500 group-hover:text-primary" />
-                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-400 group-hover:text-white">Esta Semana</span>
+                    <button onClick={() => handleDownload('week')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+                        <TrendingUp size={24} className="text-zinc-400 group-hover:text-white" />
+                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-500 group-hover:text-white">Esta Semana</span>
                     </button>
-                    <button onClick={() => handleDownload('month')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-zinc-900 border border-white/5 hover:border-primary/50 hover:bg-zinc-800 transition-all group">
-                        <BarChart3 size={24} className="text-zinc-500 group-hover:text-primary" />
-                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-400 group-hover:text-white">Todo el Mes</span>
+                    <button onClick={() => handleDownload('month')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
+                        <BarChart3 size={24} className="text-zinc-400 group-hover:text-white" />
+                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-500 group-hover:text-white">Todo el Mes</span>
                     </button>
-                    <button onClick={() => handleDownload('history')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-all group shadow-glow-sm">
-                        <History size={24} className="text-primary" />
-                        <span className="text-xs font-black uppercase tracking-tighter text-primary group-hover:text-white">Historial Total</span>
+                    <button onClick={() => handleDownload('history')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-primary text-white border border-primary hover:scale-[1.02] transition-all group shadow-lg shadow-primary/30">
+                        <History size={24} className="text-white" />
+                        <span className="text-xs font-black uppercase tracking-tighter text-white/80 group-hover:text-white">Historial Total</span>
                     </button>
                 </div>
             </section>
 
-            <div className="stats-grid">
-                <div className="card stat-card border-l-4 border-l-blue-500">
-                    <div className="flex justify-between items-start text-secondary">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="card stat-card bg-white border-zinc-100 shadow-sm p-4 rounded-2xl border-l-4 border-l-blue-500">
+                    <div className="flex justify-between items-start text-zinc-500 mb-2">
                         <span className="text-xs uppercase font-bold tracking-widest">Ingresos Totales</span>
-                        <div className="bg-blue-500/10 p-2 rounded-xl text-blue-500">
+                        <div className="bg-blue-50 p-2 rounded-xl text-blue-500">
                             <DollarSign size={20} />
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value">${kpis.totalRevenue.toLocaleString()}</div>
-                        <p className="text-[10px] text-secondary font-bold uppercase">
+                        <div className="stat-value text-2xl font-black text-zinc-900">${kpis.totalRevenue.toLocaleString()}</div>
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">
                             {timeFrame === 'year' ? 'En el año actual' : `Últimos ${timeFrame === 'week' ? '7' : '30'} días`}
                         </p>
                     </div>
                 </div>
 
-                <div className="card stat-card border-l-4 border-l-success">
-                    <div className="flex justify-between items-start text-success">
+                <div className="card stat-card bg-white border-zinc-100 shadow-sm p-4 rounded-2xl border-l-4 border-l-emerald-500">
+                    <div className="flex justify-between items-start text-emerald-600 mb-2">
                         <span className="text-xs uppercase font-bold tracking-widest">Ganancia Neta</span>
-                        <div className="bg-success/10 p-2 rounded-xl">
+                        <div className="bg-emerald-50 p-2 rounded-xl">
                             <TrendingUp size={20} />
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value text-success">${kpis.totalProfit.toLocaleString()}</div>
-                        <p className="text-[10px] text-secondary font-bold uppercase">
+                        <div className="stat-value text-2xl font-black text-emerald-600">${kpis.totalProfit.toLocaleString()}</div>
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">
                             Bruta: ${kpis.grossProfit.toLocaleString()} | Gastos: -${kpis.totalExpenses.toLocaleString()}
                         </p>
                     </div>
                 </div>
 
-                <div className="card stat-card border-l-4 border-l-purple-500">
-                    <div className="flex justify-between items-start text-secondary">
+                <div className="card stat-card bg-white border-zinc-100 shadow-sm p-4 rounded-2xl border-l-4 border-l-purple-500">
+                    <div className="flex justify-between items-start text-zinc-500 mb-2">
                         <span className="text-xs uppercase font-bold tracking-widest">Ticket Prom.</span>
-                        <div className="bg-purple-500/10 p-2 rounded-xl text-purple-500">
+                        <div className="bg-purple-50 p-2 rounded-xl text-purple-500">
                             <BarChart3 size={20} />
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value">${kpis.avgTicket.toFixed(0)}</div>
-                        <p className="text-[10px] text-secondary font-bold uppercase">Promedio x venta</p>
+                        <div className="stat-value text-2xl font-black text-zinc-900">${kpis.avgTicket.toFixed(0)}</div>
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Promedio x venta</p>
                     </div>
                 </div>
 
-                <div className="card stat-card border-l-4 border-l-primary">
-                    <div className="flex justify-between items-start text-primary">
+                <div className="card stat-card bg-white border-zinc-100 shadow-sm p-4 rounded-2xl border-l-4 border-l-primary">
+                    <div className="flex justify-between items-start text-primary mb-2">
                         <span className="text-xs uppercase font-bold tracking-widest">Margen Bruto</span>
                         <div className="bg-primary/10 p-2 rounded-xl">
                             <Filter size={20} />
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value text-primary">{kpis.margin.toFixed(1)}%</div>
-                        <p className="text-[10px] text-secondary font-bold uppercase">Rentabilidad</p>
+                        <div className="stat-value text-2xl font-black text-primary">{kpis.margin.toFixed(1)}%</div>
+                        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Rentabilidad</p>
                     </div>
                 </div>
             </div>
 
-            <section className="card p-0 overflow-hidden">
-                <div className="p-6 border-b border-glass-border flex items-center justify-between bg-zinc-900/50">
+            <section className="card p-0 overflow-hidden bg-white border border-zinc-200 shadow-sm rounded-2xl">
+                <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
                     <div className="flex items-center gap-3">
-                        <div className="bg-primary/20 p-2 rounded-xl text-primary">
+                        <div className="bg-white p-2 rounded-xl text-primary shadow-sm border border-zinc-100">
                             <BarChart3 size={24} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold">Rendimiento Histórico</h2>
-                            <p className="text-xs text-secondary">Evolución de ventas y ganancias</p>
+                            <h2 className="text-lg font-bold text-zinc-900">Rendimiento Histórico</h2>
+                            <p className="text-xs text-zinc-500">Evolución de ventas y ganancias</p>
                         </div>
                     </div>
                 </div>
                 <div className="p-6 h-[350px] w-full">
                     <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#ffffff03" vertical={false} />
+                            <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
                             <XAxis
                                 dataKey="date"
-                                stroke="#52525b"
+                                stroke="#71717a"
                                 fontSize={11}
                                 tickLine={false}
                                 axisLine={false}
                                 dy={10}
                             />
                             <YAxis
-                                stroke="#52525b"
+                                stroke="#71717a"
                                 fontSize={11}
                                 tickLine={false}
                                 axisLine={false}
@@ -416,59 +416,60 @@ export default function ReportsPage() {
                             />
                             <Tooltip
                                 contentStyle={{
-                                    backgroundColor: '#18181b',
-                                    borderColor: '#27272a',
-                                    borderRadius: '16px',
-                                    boxShadow: '0 20px 40px rgba(0,0,0,0.4)',
-                                    border: '1px solid rgba(255,255,255,0.08)'
+                                    backgroundColor: '#ffffff',
+                                    borderColor: '#e4e4e7',
+                                    borderRadius: '12px',
+                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                                    color: '#09090b'
                                 }}
-                                cursor={{ fill: 'rgba(255,255,255,0.03)' }}
+                                itemStyle={{ color: '#09090b' }}
+                                cursor={{ fill: 'rgba(0,0,0,0.03)' }}
                             />
                             <Legend verticalAlign="top" height={36} iconType="circle" />
                             <Bar name="Ventas" dataKey="ventas" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                            <Bar name="Ganancia" dataKey="ganancia" fill="var(--success)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                            <Bar name="Ganancia" dataKey="ganancia" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </section>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <section className="card p-0 flex flex-col h-[400px]">
-                    <div className="p-6 border-b border-glass-border bg-zinc-900/50 flex justify-between items-center">
+                <section className="card p-0 flex flex-col h-[400px] bg-white border border-zinc-200 shadow-sm rounded-2xl">
+                    <div className="p-6 border-b border-zinc-100 bg-zinc-50 flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <div className="bg-warning/10 p-2 rounded-xl text-warning">
+                            <div className="bg-amber-50 p-2 rounded-xl text-amber-500 border border-amber-100">
                                 <Package size={20} />
                             </div>
-                            <h2 className="font-bold">Top Productos</h2>
+                            <h2 className="font-bold text-zinc-900">Top Productos</h2>
                         </div>
                     </div>
                     <div className="flex-1 overflow-auto">
                         <table className="w-full">
                             <thead>
-                                <tr>
-                                    <th>Producto</th>
-                                    <th className="text-right">Ventas</th>
-                                    <th className="text-right">Total</th>
+                                <tr className="border-b border-zinc-100 text-xs text-zinc-400 uppercase tracking-wider">
+                                    <th className="p-4 text-left font-bold">Producto</th>
+                                    <th className="p-4 text-right font-bold">Ventas</th>
+                                    <th className="p-4 text-right font-bold">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {topProducts.map((prod, i) => (
-                                    <tr key={i} className="hover:bg-white/5 transition-colors">
-                                        <td>
+                                    <tr key={i} className="hover:bg-zinc-50 transition-colors border-b border-zinc-50 last:border-0">
+                                        <td className="p-4">
                                             <div className="flex items-center gap-3">
-                                                <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-zinc-800 text-[10px] font-bold flex items-center justify-center text-secondary">
+                                                <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-zinc-100 text-[10px] font-bold flex items-center justify-center text-zinc-500">
                                                     {i + 1}
                                                 </span>
-                                                <span className="font-medium truncate max-w-[150px]">{prod.name}</span>
+                                                <span className="font-medium truncate max-w-[150px] text-zinc-900">{prod.name}</span>
                                             </div>
                                         </td>
-                                        <td className="text-right text-secondary font-medium">{prod.quantity}</td>
-                                        <td className="text-right font-bold text-success">${prod.revenue.toFixed(0)}</td>
+                                        <td className="p-4 text-right text-zinc-500 font-medium">{prod.quantity}</td>
+                                        <td className="p-4 text-right font-bold text-emerald-600">${prod.revenue.toFixed(0)}</td>
                                     </tr>
                                 ))}
                                 {topProducts.length === 0 && (
                                     <tr>
-                                        <td colSpan="3" className="text-center py-20 text-secondary italic">No hay datos suficientes</td>
+                                        <td colSpan="3" className="text-center py-20 text-zinc-400 italic">No hay datos suficientes</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -476,40 +477,40 @@ export default function ReportsPage() {
                     </div>
                 </section>
 
-                <section className="card p-0 flex flex-col h-[400px]">
-                    <div className="p-6 border-b border-glass-border bg-zinc-900/50 flex justify-between items-center">
+                <section className="card p-0 flex flex-col h-[400px] bg-white border border-zinc-200 shadow-sm rounded-2xl">
+                    <div className="p-6 border-b border-zinc-100 bg-zinc-50 flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <div className="bg-blue-500/10 p-2 rounded-xl text-blue-500">
+                            <div className="bg-blue-50 p-2 rounded-xl text-blue-500 border border-blue-100">
                                 <History size={20} />
                             </div>
-                            <h2 className="font-bold">Ventas Recientes</h2>
+                            <h2 className="font-bold text-zinc-900">Ventas Recientes</h2>
                         </div>
                     </div>
                     <div className="flex-1 overflow-auto p-4 flex flex-col gap-3">
                         {sales.slice(0, 8).map((sale) => (
-                            <div key={sale.id} className="p-4 bg-zinc-900/30 rounded-2xl border border-white/5 flex justify-between items-center hover:border-primary/30 transition-all group">
+                            <div key={sale.id} className="p-4 bg-white rounded-2xl border border-zinc-100 flex justify-between items-center hover:border-primary/30 hover:shadow-md transition-all group shadow-sm">
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bold text-lg">${sale.total.toFixed(0)}</span>
-                                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                                        <span className="font-bold text-lg text-zinc-900">${sale.total.toFixed(0)}</span>
+                                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-600'}`}>
                                             {sale.paymentMethod || 'Efectivo'}
                                         </span>
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-white truncate max-w-[120px]">
+                                        <span className="text-sm font-bold text-zinc-700 truncate max-w-[120px]">
                                             {sale.customerName || "Venta Rápida"}
                                         </span>
-                                        <span className="text-[10px] text-secondary font-bold uppercase tracking-wider">
+                                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
                                             {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="text-right">
-                                        <span className="block text-[8px] text-zinc-500 font-bold uppercase">Ganancia</span>
-                                        <span className="font-bold text-success text-sm">+${sale.profit.toFixed(0)}</span>
+                                        <span className="block text-[8px] text-zinc-400 font-bold uppercase">Ganancia</span>
+                                        <span className="font-bold text-emerald-600 text-sm">+${sale.profit.toFixed(0)}</span>
                                     </div>
-                                    <div className="h-10 w-10 rounded-xl bg-zinc-800 flex items-center justify-center text-xs font-bold shadow-inner">
+                                    <div className="h-10 w-10 rounded-xl bg-zinc-50 flex items-center justify-center text-xs font-bold text-zinc-600 border border-zinc-100">
                                         {sale.items?.length}
                                     </div>
                                 </div>

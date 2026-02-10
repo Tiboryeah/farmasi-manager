@@ -82,110 +82,126 @@ export default function NewSalePage() {
 
     if (step === 1) {
         return (
-            <div className="flex flex-col h-full pb-24">
-                <header className="flex items-center gap-3 py-4 mb-2">
-                    <Link href="/" className="btn btn-ghost p-1"><ChevronLeft /></Link>
-                    <h1 className="text-xl font-bold">Nueva Venta</h1>
+            <div className="flex flex-col h-[calc(100vh-80px)] md:h-[100vh] bg-[var(--color-background)]">
+                <header className="flex items-center gap-3 py-4 px-4 bg-[var(--color-surface)] border-b border-[var(--color-glass-border)] shrink-0">
+                    <Link href="/" className="btn btn-ghost p-1 text-[var(--color-text-main)]"><ChevronLeft /></Link>
+                    <div className="flex-1">
+                        <h1 className="text-xl font-bold text-[var(--color-text-main)]">Nueva Venta</h1>
+                    </div>
                 </header>
 
-                <div className="mb-4 relative">
-                    <Search className="absolute left-3 top-2.5 text-secondary" size={20} />
-                    <input
-                        className="input pl-10"
-                        placeholder="Buscar producto..."
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                    />
-                </div>
-
-                <div className="mb-4">
-                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                        {categories.map(cat => (
-                            <button
-                                key={cat}
-                                onClick={() => setSelectedCategory(cat)}
-                                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold transition-all ${selectedCategory === cat ? 'bg-white text-zinc-900 shadow-lg' : 'bg-zinc-900 text-zinc-400 hover:text-white'}`}
-                            >
-                                {cat}
-                            </button>
-                        ))}
+                <div className="px-4 py-2 bg-[var(--color-surface)] border-b border-[var(--color-glass-border)] shrink-0">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-2.5 text-[var(--color-text-muted)]" size={20} />
+                        <input
+                            className="w-full bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] rounded-2xl pl-10 h-10 text-[var(--color-text-main)] outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-[var(--color-text-muted)] shadow-sm"
+                            placeholder="Buscar producto..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-3 overflow-y-auto flex-1">
-                    {filteredProducts.map(product => {
-                        const inCart = cart.find(i => i.id === product.id);
-                        return (
-                            <div key={product.id} className="card flex items-center justify-between p-3" onClick={() => addToCart(product)}>
-                                <div className="flex items-center gap-3">
-                                    {product.image && product.image.startsWith('data:image') ? (
-                                        <img src={product.image} alt={product.name} className="h-12 w-12 rounded-lg object-cover bg-zinc-800" />
-                                    ) : (
-                                        <div className="text-2xl h-12 w-12 rounded-lg bg-zinc-800 flex items-center justify-center">{product.image || "📦"}</div>
-                                    )}
-                                    <div>
-                                        <div className="font-bold text-sm text-white">{product.name}</div>
-                                        {product.attributes && product.attributes.length > 0 && (
-                                            <div className="flex flex-wrap gap-1 mt-0.5">
-                                                {product.attributes.map((attr, idx) => (
-                                                    <span key={idx} className="text-[10px] text-zinc-500">
-                                                        {attr.name}: <span className="text-zinc-400">{attr.value}</span>
-                                                    </span>
-                                                ))}
+                <div className="flex flex-1 overflow-hidden relative">
+                    {/* Category Sidebar */}
+                    <aside className="w-24 md:w-48 bg-[var(--color-surface-highlight)] border-r border-[var(--color-glass-border)] flex flex-col overflow-hidden shrink-0">
+                        <div className="p-2 border-b border-[var(--color-glass-border)] text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-center bg-[var(--color-surface)]">
+                            Categorías
+                        </div>
+                        <div className="overflow-y-auto flex flex-col gap-2 p-2 pb-24 scrollbar-hide">
+                            {categories.map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    className={`flex flex-col items-center justify-center p-2 rounded-xl text-xs font-bold transition-all text-center min-h-[5rem] border ${selectedCategory === cat
+                                        ? 'bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-100'
+                                        : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] border-transparent hover:bg-[var(--color-surface-hover)]'
+                                        }`}
+                                >
+                                    <span className="line-clamp-2 leading-tight">{cat}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </aside>
+
+                    {/* Products Grid */}
+                    <div className="flex-1 overflow-y-auto p-4 pb-24 bg-[var(--color-background)]">
+                        <div className="flex flex-col gap-3">
+                            {filteredProducts.map(product => {
+                                const inCart = cart.find(i => i.id === product.id);
+                                return (
+                                    <div key={product.id} className="card flex items-center justify-between p-3 bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-sm hover:translate-y-[-2px] transition-transform" onClick={() => addToCart(product)}>
+                                        <div className="flex items-center gap-3 overflow-hidden">
+                                            {product.image && product.image.startsWith('data:image') ? (
+                                                <img src={product.image} alt={product.name} className="h-12 w-12 rounded-lg object-cover bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] shrink-0" />
+                                            ) : (
+                                                <div className="text-2xl h-12 w-12 rounded-lg bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] flex items-center justify-center shrink-0">{product.image || "📦"}</div>
+                                            )}
+                                            <div className="min-w-0">
+                                                <div className="font-bold text-sm text-[var(--color-text-main)] truncate">{product.name}</div>
+                                                {product.attributes && product.attributes.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1 mt-0.5">
+                                                        {product.attributes.map((attr, idx) => (
+                                                            <span key={idx} className="text-[10px] text-[var(--color-text-muted)] bg-[var(--color-surface-highlight)] px-1 rounded">
+                                                                {attr.name}: <span className="text-[var(--color-text-main)]">{attr.value}</span>
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                <div className="flex gap-2 items-end mt-1">
+                                                    <div className="text-primary font-bold text-base leading-none">${product.price}</div>
+                                                    <div className="text-[10px] text-[var(--color-text-muted)] mb-0.5">Stock: {product.stock}</div>
+                                                </div>
                                             </div>
-                                        )}
-                                        <div className="flex gap-2 items-end">
-                                            <div className="text-primary font-bold">${product.price}</div>
-                                            <div className="text-[10px] text-secondary mb-0.5">Stock: {product.stock}</div>
                                         </div>
+
+                                        {inCart ? (
+                                            <div className="badge bg-green-100 text-green-700 border border-green-200 font-bold px-2 py-1 rounded-lg text-xs shrink-0 whitespace-nowrap">{inCart.qty} en carrito</div>
+                                        ) : (
+                                            <button className="btn btn-outline p-2 rounded-full border-dashed border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-primary hover:border-primary shrink-0">
+                                                <Plus size={18} />
+                                            </button>
+                                        )}
                                     </div>
-                                </div>
-
-                                {inCart ? (
-                                    <div className="badge badge-success">{inCart.qty} en carrito</div>
-                                ) : (
-                                    <button className="btn btn-outline p-2 rounded-full border-dashed border-secondary">
-                                        <Plus size={16} />
-                                    </button>
-                                )}
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {cart.length > 0 && (
-                    <div className="fixed bottom-20 left-4 right-4 animate-fade-in">
-                        <button
-                            onClick={() => setStep(2)}
-                            className="btn btn-primary w-full shadow-lg flex justify-between items-center py-4"
-                        >
-                            <div className="flex flex-col items-start px-2">
-                                <span className="text-xs opacity-90">{cart.length} productos</span>
-                                <span className="text-lg font-bold">${cartTotal.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                Continuar <ArrowRight size={20} />
-                            </div>
-                        </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                )}
+
+                    {cart.length > 0 && (
+                        <div className="absolute bottom-4 left-4 right-4 z-50 animate-fade-in md:left-[calc(50%-300px)] md:right-auto md:w-[600px] mb-20 md:mb-0">
+                            <button
+                                onClick={() => setStep(2)}
+                                className="bg-zinc-900 text-white p-4 rounded-2xl w-full shadow-2xl flex justify-between items-center border border-zinc-700 hover:scale-[1.02] transition-transform"
+                            >
+                                <div className="flex flex-col items-start px-2">
+                                    <span className="text-xs opacity-70 font-medium uppercase tracking-widest">{cart.length} productos</span>
+                                    <span className="text-xl font-black">${cartTotal.toFixed(2)}</span>
+                                </div>
+                                <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl font-bold text-sm backdrop-blur-md">
+                                    Continuar <ArrowRight size={18} />
+                                </div>
+                            </button>
+                        </div>
+                    )}
+                </div>
             </div>
         );
     }
 
     if (step === 2) {
         return (
-            <div className="flex flex-col h-full pb-24">
-                <header className="flex items-center gap-3 py-4 mb-2">
-                    <button onClick={() => setStep(1)} className="btn btn-ghost p-1"><ChevronLeft /></button>
-                    <h1 className="text-xl font-bold">Ajustar Precios</h1>
+            <div className="flex flex-col h-full pb-2 fixed inset-0 overflow-hidden bg-[var(--color-background)]">
+                <header className="flex items-center gap-3 py-4 px-4 bg-[var(--color-surface)] border-b border-[var(--color-glass-border)] z-10 shrink-0">
+                    <button onClick={() => setStep(1)} className="btn btn-ghost p-1 text-[var(--color-text-main)]"><ChevronLeft /></button>
+                    <h1 className="text-xl font-bold text-[var(--color-text-main)]">Ajustar Precios</h1>
                 </header>
 
-                <div className="flex flex-col gap-4 mb-6">
+                <div className="flex flex-col gap-4 mb-6 px-4 pt-4">
                     <div className="space-y-1.5">
-                        <label className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-1">Cliente</label>
+                        <label className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Cliente</label>
                         <input
-                            className="input bg-zinc-900/50 border-white/5 h-12"
+                            className="w-full bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] rounded-xl px-4 h-12 text-[var(--color-text-main)] outline-none focus:border-primary transition-all shadow-sm"
                             placeholder="Nombre del cliente (Opcional)"
                             value={customerName}
                             onChange={e => setCustomerName(e.target.value)}
@@ -193,17 +209,17 @@ export default function NewSalePage() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-black uppercase tracking-widest text-zinc-500 ml-1">Método de Pago</label>
-                        <div className="grid grid-cols-2 gap-2 glass p-1 rounded-2xl">
+                        <label className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)] ml-1">Método de Pago</label>
+                        <div className="grid grid-cols-2 gap-2 bg-[var(--color-surface-highlight)] p-1 rounded-2xl border border-[var(--color-glass-border)]">
                             <button
                                 onClick={() => setPaymentMethod("Efectivo")}
-                                className={`py-2.5 rounded-xl text-sm font-black transition-all ${paymentMethod === 'Efectivo' ? 'bg-primary text-white shadow-glow' : 'text-zinc-500'}`}
+                                className={`py-2.5 rounded-xl text-sm font-black transition-all ${paymentMethod === 'Efectivo' ? 'bg-primary text-white shadow-glow' : 'text-[var(--color-text-muted)]'}`}
                             >
                                 Efectivo
                             </button>
                             <button
                                 onClick={() => setPaymentMethod("Tarjeta")}
-                                className={`py-2.5 rounded-xl text-sm font-black transition-all ${paymentMethod === 'Tarjeta' ? 'bg-blue-600 text-white shadow-glow' : 'text-zinc-500'}`}
+                                className={`py-2.5 rounded-xl text-sm font-black transition-all ${paymentMethod === 'Tarjeta' ? 'bg-blue-600 text-white shadow-glow' : 'text-[var(--color-text-muted)]'}`}
                             >
                                 Tarjeta
                             </button>
@@ -211,30 +227,30 @@ export default function NewSalePage() {
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-xs font-black uppercase tracking-widest text-zinc-500">Resumen de Productos</h3>
-                    <div className="text-[10px] text-zinc-600 font-medium">Puedes ajustar los precios aquí</div>
+                <div className="flex items-center justify-between mb-2 px-4">
+                    <h3 className="text-xs font-black uppercase tracking-widest text-[var(--color-text-muted)]">Resumen de Productos</h3>
+                    <div className="text-[10px] text-[var(--color-text-muted)] font-medium">Puedes ajustar los precios aquí</div>
                 </div>
 
-                <div className="flex flex-col gap-4 overflow-y-auto flex-1">
+                <div className="flex flex-col gap-4 overflow-y-auto flex-1 px-4 pb-40">
                     {cart.map(item => (
-                        <div key={item.id} className="card p-3">
+                        <div key={item.id} className="card p-3 bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-sm rounded-xl">
                             <div className="flex justify-between items-start mb-3">
-                                <div className="font-bold text-sm max-w-[70%]">{item.name}</div>
+                                <div className="font-bold text-sm max-w-[70%] text-[var(--color-text-main)]">{item.name}</div>
                                 <button onClick={() => removeFromCart(item.id)} className="text-danger p-1"><Trash2 size={16} /></button>
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-xs text-secondary mb-1 block">Cantidad</label>
+                                    <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Cantidad</label>
                                     <div className="flex items-center gap-3">
                                         <button
-                                            className="btn btn-outline p-1 rounded-md h-8 w-8 flex items-center justify-center"
+                                            className="btn btn-outline p-1 rounded-md h-8 w-8 flex items-center justify-center text-[var(--color-text-main)] border-[var(--color-glass-border)]"
                                             onClick={() => updateCartItem(item.id, 'qty', Math.max(1, item.qty - 1))}
                                         ><Minus size={14} /></button>
-                                        <span className="font-bold w-4 text-center">{item.qty}</span>
+                                        <span className="font-bold w-4 text-center text-[var(--color-text-main)]">{item.qty}</span>
                                         <button
-                                            className="btn btn-outline p-1 rounded-md h-8 w-8 flex items-center justify-center"
+                                            className="btn btn-outline p-1 rounded-md h-8 w-8 flex items-center justify-center text-[var(--color-text-main)] border-[var(--color-glass-border)]"
                                             onClick={() => updateCartItem(item.id, 'qty', item.qty + 1)}
                                         ><Plus size={14} /></button>
                                     </div>
@@ -246,7 +262,7 @@ export default function NewSalePage() {
                                     </label>
                                     <input
                                         type="number"
-                                        className="input py-1 px-2 h-8 text-right bg-surface-hover border-primary/50 text-white font-bold"
+                                        className="w-full bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] rounded-lg py-1 px-2 h-8 text-right text-[var(--color-text-main)] font-bold outline-none focus:border-primary transition-all"
                                         value={item.price}
                                         onChange={(e) => updateCartItem(item.id, 'price', parseFloat(e.target.value) || 0)}
                                     />
@@ -260,56 +276,58 @@ export default function NewSalePage() {
                     ))}
                 </div>
 
-                <div className="fixed bottom-20 left-4 right-4 bg-surface border border-border p-4 rounded-xl shadow-lg">
-                    <div className="flex justify-between items-center mb-2">
-                        <span className="text-secondary">Subtotal</span>
-                        <span>${cartTotal.toFixed(2)}</span>
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-[var(--color-surface)] border-t border-[var(--color-glass-border)] z-20 md:left-[250px] shadow-2xl">
+                    <div className="max-w-[600px] mx-auto w-full">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-[var(--color-text-muted)]">Subtotal</span>
+                            <span className="text-[var(--color-text-main)] font-bold">${cartTotal.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-4">
+                            <span className="text-success text-sm">Ganancia Est.</span>
+                            <span className="text-success font-bold text-sm">+${totalProfit.toFixed(2)}</span>
+                        </div>
+                        <button className="btn btn-primary w-full py-3 shadow-lg shadow-primary/20" onClick={handleConfirmSale}>
+                            Confirmar Venta
+                        </button>
                     </div>
-                    <div className="flex justify-between items-center mb-4">
-                        <span className="text-success text-sm">Ganancia Est.</span>
-                        <span className="text-success font-bold text-sm">+${totalProfit.toFixed(2)}</span>
-                    </div>
-                    <button className="btn btn-primary w-full py-3" onClick={handleConfirmSale}>
-                        Confirmar Venta
-                    </button>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="flex flex-col items-center justify-center h-[80vh] text-center px-4">
-            <h2 className="text-2xl font-bold mb-2 text-white">¡Venta Exitosa!</h2>
+        <div className="flex flex-col items-center justify-center min-h-[80vh] text-center px-4 animate-fade-in">
+            <h2 className="text-2xl font-bold mb-4 text-[var(--color-text-main)]">¡Venta Exitosa!</h2>
 
-            <div className="glass p-6 rounded-3xl w-full mb-8 text-left space-y-4">
-                <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                    <span className="text-zinc-500 text-xs font-black uppercase tracking-widest">Total</span>
-                    <span className="text-xl font-black text-white">${cartTotal.toFixed(2)}</span>
+            <div className="bg-[var(--color-surface)] border border-[var(--color-glass-border)] p-6 rounded-3xl w-full mb-8 text-left space-y-4 shadow-xl">
+                <div className="flex justify-between items-center border-b border-[var(--color-glass-border)] pb-3">
+                    <span className="text-[var(--color-text-muted)] text-xs font-black uppercase tracking-widest">Total</span>
+                    <span className="text-xl font-black text-[var(--color-text-main)]">${cartTotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                    <span className="text-zinc-500 text-xs font-black uppercase tracking-widest">Cliente</span>
-                    <span className="font-bold text-white text-sm">{customerName || "Consumidor Final"}</span>
+                <div className="flex justify-between items-center border-b border-[var(--color-glass-border)] pb-3">
+                    <span className="text-[var(--color-text-muted)] text-xs font-black uppercase tracking-widest">Cliente</span>
+                    <span className="font-bold text-[var(--color-text-main)] text-sm">{customerName || "Consumidor Final"}</span>
                 </div>
-                <div className="flex justify-between items-center border-b border-white/5 pb-3">
-                    <span className="text-zinc-500 text-xs font-black uppercase tracking-widest">Pago</span>
-                    <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${paymentMethod === 'Tarjeta' ? 'bg-blue-500/20 text-blue-400' : 'bg-emerald-500/20 text-emerald-400'}`}>
+                <div className="flex justify-between items-center border-b border-[var(--color-glass-border)] pb-3">
+                    <span className="text-[var(--color-text-muted)] text-xs font-black uppercase tracking-widest">Pago</span>
+                    <span className={`px-2 py-1 rounded-lg text-[10px] font-black uppercase ${paymentMethod === 'Tarjeta' ? 'bg-blue-500/10 text-blue-500' : 'bg-emerald-500/10 text-emerald-500'}`}>
                         {paymentMethod}
                     </span>
                 </div>
                 <div className="flex justify-between items-center">
-                    <span className="text-zinc-500 text-xs font-black uppercase tracking-widest">Fecha</span>
-                    <span className="text-[10px] text-zinc-400 font-bold uppercase">
+                    <span className="text-[var(--color-text-muted)] text-xs font-black uppercase tracking-widest">Fecha</span>
+                    <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase">
                         {new Date().toLocaleString('es-MX', { day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit' })}
                     </span>
                 </div>
             </div>
 
             <div className="flex flex-col gap-3 w-full">
-                <Link href="/" className="btn btn-primary w-full py-3">Volver al Inicio</Link>
+                <Link href="/" className="btn btn-primary w-full py-3 shadow-lg shadow-primary/20">Volver al Inicio</Link>
                 <button onClick={() => {
                     setCart([]);
                     setStep(1);
-                }} className="btn btn-ghost w-full">Nueva Venta</button>
+                }} className="btn btn-ghost w-full text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-surface)]">Nueva Venta</button>
             </div>
         </div>
     );

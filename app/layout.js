@@ -2,6 +2,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import BottomNav from "@/components/BottomNav";
 import Sidebar from "@/components/Sidebar";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -16,22 +17,24 @@ export const metadata = {
 };
 
 export const viewport = {
-  themeColor: "#0f172a",
+  themeColor: "#ffffff",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="es">
       <body className={`${outfit.variable} antialiased`} suppressHydrationWarning>
-        <div className="app-layout">
-          <Sidebar />
-          <main className="main-content">
-            <div className="container">
-              {children}
-            </div>
-          </main>
-          <BottomNav />
-        </div>
+        <ThemeProvider>
+          <div className="app-layout">
+            <Sidebar />
+            <main className="main-content">
+              <div className="container">
+                {children}
+              </div>
+            </main>
+            <BottomNav />
+          </div>
+        </ThemeProvider>
       </body>
     </html>
   );

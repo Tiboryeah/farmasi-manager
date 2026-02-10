@@ -1,23 +1,72 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary: #f43f5e;
-  --color-primary-soft: rgba(244, 63, 94, 0.1);
-  --color-secondary: #52525b;
-  --color-danger: #ef4444;
-  --color-success: #10b981;
-  --color-warning: #f59e0b;
-  --color-background: #09090b;
-  --color-surface: #18181b;
-  --color-surface-highlight: #27272a;
-  --color-surface-hover: #3f3f46;
-  --color-glass: rgba(24, 24, 27, 0.7);
-  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --color-primary: var(--color-primary);
+  --color-primary-soft: var(--color-primary-soft);
+  --color-secondary: var(--color-secondary);
+  --color-danger: var(--color-danger);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-highlight: var(--color-surface-highlight);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-glass: var(--color-glass);
+  --color-glass-border: var(--color-glass-border);
+  --color-text-main: var(--color-text-main);
+  --color-text-muted: var(--color-text-muted);
 
   --radius-3xl: 1.5rem;
   --radius-4xl: 2rem;
 
-  --shadow-glow: 0 0 20px rgba(244, 63, 94, 0.2);
+  --shadow-glow: 0 0 20px rgba(225, 29, 72, 0.15);
+}
+
+@layer base {
+  :root {
+    /* LIGHT THEME (Default) */
+    --color-primary: #e11d48;
+    --color-primary-soft: rgba(225, 29, 72, 0.1);
+    --color-secondary: #71717a;
+    --color-danger: #ef4444;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+
+    --color-background: #f4f4f5;
+    --color-surface: #ffffff;
+    --color-surface-highlight: #f8fafc;
+    --color-surface-hover: #f1f5f9;
+
+    --color-glass: rgba(255, 255, 255, 0.9);
+    --color-glass-border: rgba(0, 0, 0, 0.05);
+
+    --color-text-main: #18181b;
+    --color-text-muted: #71717a;
+
+    --shadow-default: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  }
+
+  :root.dark {
+    /* DARK THEME */
+    --color-primary: #f43f5e;
+    --color-primary-soft: rgba(244, 63, 94, 0.15);
+    --color-secondary: #a1a1aa;
+
+    --color-background: #09090b;
+    --color-surface: #18181b;
+    --color-surface-highlight: #27272a;
+    --color-surface-hover: #27272a;
+
+    --color-glass: rgba(24, 24, 27, 0.8);
+    --color-glass-border: rgba(255, 255, 255, 0.1);
+
+    --color-text-main: #ffffff;
+    --color-text-muted: #a1a1aa;
+
+    --shadow-default: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+  }
 }
 
 /* Base Layout Classes (Standard CSS) */
@@ -61,6 +110,19 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 1024px) {
+  .container {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem;
+    padding-bottom: 8rem;
+  }
+}
+
 /* Global Component Styles (Vanilla CSS to avoid Tailwind v4 @apply issues) */
 .glass {
   background: var(--color-glass);
@@ -75,13 +137,13 @@
   border-radius: 1.5rem;
   padding: 1.5rem;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-default);
 }
 
 .card:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-  transform: translateY(-4px);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  border-color: var(--color-primary-soft);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
 }
 
 .btn {
@@ -110,29 +172,32 @@
 }
 
 .btn-secondary {
-  background: var(--color-surface-highlight);
-  color: white;
+  background: var(--color-surface);
+  color: var(--color-text-muted);
   border: 1px solid var(--color-glass-border);
 }
 
 .btn-secondary:hover {
   background: var(--color-surface-hover);
+  color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .input-field {
   width: 100%;
-  background: var(--color-surface-highlight);
+  background: var(--color-surface);
   border: 1px solid var(--color-glass-border);
   border-radius: 1rem;
   padding: 1rem;
-  color: white;
+  color: var(--color-text-main);
   outline: none;
   transition: all 0.2s ease;
+  box-shadow: var(--shadow-default);
 }
 
 .input-field:focus {
-  border-color: rgba(244, 63, 94, 0.5);
-  box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.1);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px var(--color-primary-soft);
 }
 
 .sidebar-item {
@@ -148,8 +213,8 @@
 }
 
 .sidebar-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
+  background: var(--color-surface-hover);
+  color: var(--color-text-main);
 }
 
 .sidebar-item.active {
@@ -198,13 +263,14 @@
   display: flex;
   justify-content: space-around;
   align-items: center;
-  background: rgba(18, 18, 21, 0.95);
+  background: var(--color-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-top: 1px solid var(--color-glass-border);
   padding-bottom: env(safe-area-inset-bottom);
   z-index: 100;
   box-sizing: border-box;
+  box-shadow: 0 -4px 6px -1px var(--color-glass-border);
 }
 
 @media (min-width: 1024px) {
@@ -235,7 +301,7 @@
 @layer base {
   body {
     background-color: var(--color-background);
-    color: white;
+    color: var(--color-text-main);
     -webkit-font-smoothing: antialiased;
     min-height: 100vh;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
