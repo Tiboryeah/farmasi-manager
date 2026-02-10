@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { Search, Plus, AlertCircle, Trash, SearchX, Package, ArrowUpRight, Download, Layers, Grid, Copy } from "lucide-react";
 import { getProducts, deleteProduct, copyInventoryToSamples } from "@/app/actions";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import * as XLSX from 'xlsx';
 
 export default function InventoryPage() {
@@ -194,9 +195,14 @@ export default function InventoryPage() {
 }
 
 function ProductCard({ product, handleDelete }) {
+    const router = useRouter();
     const isLowStock = product.stock <= product.minStock;
+
     return (
-        <Link href={`/inventory/${product.id}`} className="card group flex flex-col gap-4 bg-[var(--color-surface)] hover:shadow-xl border border-[var(--color-glass-border)] p-4 transition-all duration-300 rounded-2xl">
+        <div
+            onClick={() => router.push(`/inventory/${product.id}`)}
+            className="card group flex flex-col gap-4 bg-[var(--color-surface)] hover:shadow-xl border border-[var(--color-glass-border)] p-4 transition-all duration-300 rounded-2xl cursor-pointer"
+        >
             <div className="flex gap-5">
                 <div className="h-28 w-28 rounded-xl bg-[var(--color-surface-highlight)] flex items-center justify-center overflow-hidden border border-[var(--color-glass-border)] group-hover:scale-105 transition-transform duration-500">
                     {product.image && product.image.startsWith('data:image') ? (
@@ -215,14 +221,16 @@ function ProductCard({ product, handleDelete }) {
                             )}
                         </div>
                         <div className="flex gap-1 shrink-0 -mr-2 -mt-2">
-                            <Link
-                                href={`/products/new?cloneId=${product.id}`}
-                                onClick={(e) => e.stopPropagation()}
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(`/products/new?cloneId=${product.id}`);
+                                }}
                                 className="p-2 bg-[var(--color-surface)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-primary hover:border-primary rounded-full transition-all shadow-sm"
                                 title="Crear Variante (Copiar)"
                             >
                                 <Copy size={14} />
-                            </Link>
+                            </button>
                             <button
                                 onClick={(e) => handleDelete(e, product.id)}
                                 className="p-2 bg-[var(--color-surface)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-danger hover:bg-danger/10 hover:border-danger rounded-full transition-all shadow-sm"
@@ -268,6 +276,6 @@ function ProductCard({ product, handleDelete }) {
                     style={{ width: `${Math.min(100, (product.stock / (product.minStock * 2)) * 100)}%` }}
                 />
             </div>
-        </Link>
+        </div>
     );
 }

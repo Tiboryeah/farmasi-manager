@@ -609,6 +609,49 @@ export async function downloadBackupAction() {
   return JSON.parse(JSON.stringify(data));
 }
 
+export async function restoreBackupAction(backupData) {
+  const session = await getSession();
+  if (!session) return { error: "No autorizado" };
+
+  try {
+    await connectDB();
+    const userId = session.userId;
+
+    if (!backupData || !backupData.data) {
+      return { error: "Archivo de respaldo inválido o vacío" };
+    }
+
+    const { products, sales, expenses } = backupData.data;
+
+    // Wipe current data for this user
+    await Promise.all([
+      Product.deleteMany({ userId }),
+      Sale.deleteMany({ userId }),
+      Expense.deleteMany({ userId }),
+      InventoryMovement.deleteMany({ userId })
+    ]);
+
+    // Insert from backup
+    // We clean the items to ensure userId is correctly set and remove __v to avoid issues
+    const sanitize = (list) => list.map(({ __v, ...rest }) => ({ ...rest, userId }));
+
+    if (products?.length) await Product.insertMany(sanitize(products));
+    if (sales?.length) await Sale.insertMany(sanitize(sales));
+    if (expenses?.length) await Expense.insertMany(sanitize(expenses));
+
+    revalidatePath('/');
+    revalidatePath('/inventory');
+    revalidatePath('/sales');
+    revalidatePath('/reports');
+    revalidatePath('/expenses');
+
+    return { success: true };
+  } catch (error) {
+    console.error("Restore Error:", error);
+    return { error: "Error al restaurar: " + error.message };
+  }
+}
+
 export async function registerAction(formData) {
   const username = formData.get("username").trim();
   const password = formData.get("password");

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Package, ShoppingCart, FileText, LogOut, Settings, Sun, Moon } from "lucide-react";
 import { Trash2 } from "lucide-react";
-import { logoutAction, resetDatabaseAction } from "@/app/actions";
+import { logoutAction } from "@/app/actions";
 import { useTheme } from "./ThemeProvider";
 
 export default function Sidebar() {
@@ -14,22 +14,7 @@ export default function Sidebar() {
 
     if (pathname.startsWith('/login') || pathname.startsWith('/register')) return null;
 
-    const handleReset = async () => {
-        const firstConfirm = confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción borrará TODA la información: Ventas, Productos, Gastos e Historial.\n(Los usuarios no se borrarán)");
 
-        if (firstConfirm) {
-            const secondConfirm = confirm("❗ ¿ÚLTIMA ADVERTENCIA?\n\nEsta acción es irreversible y tu base de datos quedará limpia como si fuera nueva.");
-            if (secondConfirm) {
-                const res = await resetDatabaseAction();
-                if (res.success) {
-                    alert("Base de datos reiniciada con éxito.");
-                    window.location.reload();
-                } else {
-                    alert("Error: " + res.error);
-                }
-            }
-        }
-    };
 
     const navItems = [
         { name: "Inicio", href: "/", icon: LayoutDashboard },
@@ -83,13 +68,7 @@ export default function Sidebar() {
                     <span className="tracking-tight">{theme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
                 </button>
 
-                <button
-                    className="flex items-center gap-4 w-full p-4 rounded-2xl text-[var(--color-text-muted)] font-bold hover:bg-orange-500/10 hover:text-orange-500 transition-all duration-300 group"
-                    onClick={handleReset}
-                >
-                    <Trash2 size={22} className="group-hover:scale-110 transition-transform" />
-                    <span className="tracking-tight italic opacity-80">Reinicio Total</span>
-                </button>
+
                 <button
                     className="flex items-center gap-4 w-full p-4 rounded-2xl text-[var(--color-text-muted)] font-bold hover:bg-red-500/10 hover:text-red-500 transition-all duration-300 group"
                     onClick={async () => await logoutAction()}

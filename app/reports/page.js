@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getAllSales, getExpenses, downloadBackupAction } from "@/app/actions";
+import { getAllSales, getExpenses, downloadBackupAction, restoreBackupAction, resetDatabaseAction } from "@/app/actions";
 import * as XLSX from 'xlsx';
-import { Download, TrendingUp, DollarSign, Calendar, BarChart3, Package, History, ArrowUpRight, Filter, ShieldCheck } from "lucide-react";
+import { Download, TrendingUp, DollarSign, Calendar, BarChart3, Package, History, ArrowUpRight, Filter, ShieldCheck, Upload, AlertTriangle, RefreshCw, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
 
 export default function ReportsPage() {
@@ -11,6 +11,7 @@ export default function ReportsPage() {
     const [expenses, setExpenses] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isBackingUp, setIsBackingUp] = useState(false);
+    const [isRestoring, setIsRestoring] = useState(false);
     const [timeFrame, setTimeFrame] = useState('month'); // 'week' | 'month' | 'year'
 
     useEffect(() => {
@@ -247,6 +248,71 @@ export default function ReportsPage() {
         }
     };
 
+    const handleRestore = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Reset input immediately so same file can be chosen again if needed
+        const input = e.target;
+
+        if (!confirm("⚠️ ¡ADVERTENCIA CRÍTICA!\n\nAl restaurar un respaldo, se BORRARÁN todos tus productos, ventas y gastos actuales para ser reemplazados por los del archivo.\n\n¿Estás seguro de que quieres continuar?")) {
+            input.value = "";
+            return;
+        }
+
+        if (!confirm("❗ ÚLTIMA CONFIRMACIÓN:\n\nEsta acción es irreversible si no tienes otro respaldo reciente.\n\n¿Proceder con la restauración?")) {
+            input.value = "";
+            return;
+        }
+
+        setIsRestoring(true);
+        try {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                try {
+                    const backupData = JSON.parse(event.target.result);
+                    const res = await restoreBackupAction(backupData);
+
+                    if (res.success) {
+                        alert("✅ Datos restaurados con éxito. La página se recargará.");
+                        window.location.reload();
+                    } else {
+                        alert("❌ Error: " + res.error);
+                    }
+                } catch (parseError) {
+                    alert("❌ El archivo seleccionado no es un respaldo válido.");
+                } finally {
+                    setIsRestoring(false);
+                    input.value = "";
+                }
+            };
+            reader.readAsText(file);
+        } catch (error) {
+            console.error("Restore process failed:", error);
+            alert("Error al procesar el archivo.");
+            setIsRestoring(false);
+            input.value = "";
+        }
+    };
+
+    const handleReset = async () => {
+        const firstConfirm = confirm("⚠️ ¿ESTÁS SEGURO?\n\nEsta acción borrará TODA la información: Ventas, Productos, Gastos e Historial.\n\nSe recomienda descargar un RESPALDO antes de continuar.");
+        if (!firstConfirm) return;
+
+        const secondConfirm = confirm("❗ ¿ÚLTIMA ADVERTENCIA?\n\nEsta acción es TOTALMENTE IRREVERSIBLE.\n\n¿Deseas dejar tu cuenta totalmente en blanco?");
+        if (!secondConfirm) return;
+
+        setLoading(true);
+        const res = await resetDatabaseAction();
+        if (res.success) {
+            alert("Base de datos reiniciada con éxito.");
+            window.location.reload();
+        } else {
+            alert("Error: " + res.error);
+            setLoading(false);
+        }
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -323,6 +389,45 @@ export default function ReportsPage() {
                         <History size={24} className="text-white" />
                         <span className="text-[10px] font-black uppercase tracking-widest text-white/90 group-hover:text-white">Exportación Total</span>
                     </button>
+                </div>
+            </section>
+
+            {/* RESTORE SECTION */}
+            <section className="card p-6 bg-[var(--color-surface)] border-2 border-dashed border-primary/20 shadow-xl rounded-2xl overflow-hidden relative">
+                <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="h-16 w-16 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20 shrink-0">
+                        <Upload size={32} />
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                        <h2 className="text-xl font-bold text-[var(--color-text-main)] flex items-center justify-center md:justify-start gap-2">
+                            Importación y Restauración <AlertTriangle size={18} className="text-amber-500" />
+                        </h2>
+                        <p className="text-sm text-[var(--color-text-muted)] font-medium mt-1">
+                            Recupera tu negocio desde un archivo de respaldo previo (.json).
+                            <span className="text-primary font-bold"> Esta acción reemplazará todos tus datos actuales.</span>
+                        </p>
+                    </div>
+                    <div>
+                        <input
+                            type="file"
+                            accept=".json"
+                            onChange={handleRestore}
+                            id="restore-upload"
+                            className="hidden"
+                            disabled={isRestoring}
+                        />
+                        <label
+                            htmlFor="restore-upload"
+                            className={`btn h-14 rounded-2xl flex items-center gap-3 px-8 shadow-lg cursor-pointer transition-all ${isRestoring ? 'bg-[var(--color-surface-highlight)] text-[var(--color-text-muted)]' : 'bg-[var(--color-surface-highlight)] text-[var(--color-text-main)] hover:bg-primary hover:text-white border-[var(--color-glass-border)] hover:scale-[1.05]'}`}
+                        >
+                            {isRestoring ? (
+                                <RefreshCw className="animate-spin" size={20} />
+                            ) : (
+                                <History size={20} />
+                            )}
+                            <span className="font-black uppercase tracking-widest text-xs">Cargar Respaldo</span>
+                        </label>
+                    </div>
                 </div>
             </section>
 
@@ -525,6 +630,82 @@ export default function ReportsPage() {
                     </div>
                 </section>
             </div>
+
+            {/* SYSTEM MAINTENANCE SECTION */}
+            <section className="mt-8 border-t border-[var(--color-glass-border)] pt-12">
+                <div className="flex items-center gap-3 mb-6">
+                    <Settings className="text-[var(--color-text-muted)]" size={20} />
+                    <h2 className="text-xl font-bold text-[var(--color-text-main)]">Mantenimiento del Sistema</h2>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* RESTORE BOX */}
+                    <div className="card p-6 bg-[var(--color-surface)] border-2 border-dashed border-primary/20 rounded-2xl relative group hover:border-primary/40 transition-all">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
+                                <Upload size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-[var(--color-text-main)]">Restaurar Copia</h3>
+                                <p className="text-xs text-[var(--color-text-muted)] mt-0.5">Sobrescribe todo con un respaldo .json</p>
+                            </div>
+                        </div>
+                        <input
+                            type="file"
+                            accept=".json"
+                            onChange={handleRestore}
+                            id="restore-upload-final"
+                            className="hidden"
+                            disabled={isRestoring}
+                        />
+                        <label
+                            htmlFor="restore-upload-final"
+                            className={`btn h-12 w-full rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-all ${isRestoring ? 'bg-[var(--color-surface-highlight)] text-[var(--color-text-muted)]' : 'bg-primary/5 text-primary border border-primary/20 hover:bg-primary hover:text-white shadow-sm'}`}
+                        >
+                            {isRestoring ? <RefreshCw className="animate-spin" size={18} /> : <History size={18} />}
+                            <span className="font-black uppercase tracking-widest text-[10px]">{isRestoring ? 'Procesando...' : 'Cargar Respaldo'}</span>
+                        </label>
+                    </div>
+
+                    {/* WIPE BOX */}
+                    <div className="card p-6 bg-[var(--color-surface)] border border-red-500/10 rounded-2xl relative group hover:bg-red-500/[0.02] transition-all">
+                        <div className="flex items-center gap-4 mb-4">
+                            <div className="h-12 w-12 rounded-xl bg-red-500/10 flex items-center justify-center text-red-500 border border-red-500/20">
+                                <Trash2 size={24} />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-red-500">¿Borrar Todo?</h3>
+                                <p className="text-xs text-[var(--color-text-muted)] mt-0.5 text-balance">Limpia toda la información para empezar de cero.</p>
+                            </div>
+                        </div>
+                        <button
+                            onClick={handleReset}
+                            className="btn h-12 w-full rounded-xl flex items-center justify-center gap-2 bg-red-500/5 text-red-500 border border-red-500/10 hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                        >
+                            <AlertTriangle size={18} />
+                            <span className="font-black uppercase tracking-widest text-[10px]">Reinicio Total de Cuenta</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
         </div>
     );
 }
+
+const Settings = ({ className, size }) => (
+    <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={className}
+    >
+        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.38a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.72v-.51a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+        <circle cx="12" cy="12" r="3" />
+    </svg>
+);
