@@ -23,7 +23,24 @@ function NewProductForm() {
         type: defaultType
     });
 
+    const [createTestCopy, setCreateTestCopy] = useState(false);
+    const [attributes, setAttributes] = useState([]);
+
     const [preview, setPreview] = useState(null);
+
+    const handleAddAttribute = () => {
+        setAttributes([...attributes, { name: '', value: '' }]);
+    };
+
+    const handleAttributeChange = (index, field, value) => {
+        const newAttributes = [...attributes];
+        newAttributes[index][field] = value;
+        setAttributes(newAttributes);
+    };
+
+    const handleRemoveAttribute = (index) => {
+        setAttributes(attributes.filter((_, i) => i !== index));
+    };
 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
@@ -69,7 +86,7 @@ function NewProductForm() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await createProduct(formData);
+        await createProduct({ ...formData, attributes, createTestCopy });
         router.push("/inventory");
     };
 
@@ -163,6 +180,49 @@ function NewProductForm() {
                         <label className="text-sm text-secondary mb-1 block">Stock Mínimo</label>
                         <input name="minStock" type="number" className="input" defaultValue="5" onChange={handleChange} />
                     </div>
+                </div>
+
+                {/* Attributes Section */}
+                <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                    <div className="flex items-center justify-between mb-2">
+                        <label className="text-sm font-bold text-secondary">Atributos Adicionales</label>
+                        <button type="button" onClick={handleAddAttribute} className="text-xs btn btn-sm btn-ghost text-primary">+ Añadir</button>
+                    </div>
+                    {attributes.length === 0 && <p className="text-xs text-zinc-600 italic">Sin atributos (ej. Color, Sabor)</p>}
+                    <div className="flex flex-col gap-2">
+                        {attributes.map((attr, index) => (
+                            <div key={index} className="flex gap-2">
+                                <input
+                                    placeholder="Nombre (ej. Color)"
+                                    value={attr.name}
+                                    onChange={(e) => handleAttributeChange(index, 'name', e.target.value)}
+                                    className="input text-xs flex-1"
+                                />
+                                <input
+                                    placeholder="Valor (ej. Rojo)"
+                                    value={attr.value}
+                                    onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
+                                    className="input text-xs flex-1"
+                                />
+                                <button type="button" onClick={() => handleRemoveAttribute(index)} className="btn btn-square btn-xs btn-ghost text-error">✕</button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
+                {/* Test Copy Checkbox */}
+                <div className="flex items-center gap-3 p-3 bg-zinc-900/50 rounded-xl border border-zinc-800">
+                    <input
+                        type="checkbox"
+                        id="testCopy"
+                        checked={createTestCopy}
+                        onChange={(e) => setCreateTestCopy(e.target.checked)}
+                        className="checkbox checkbox-primary"
+                    />
+                    <label htmlFor="testCopy" className="text-sm cursor-pointer select-none">
+                        Crear copia para <b>Inventario de Pruebas</b>
+                        <span className="block text-xs text-secondary mt-0.5">Se creará un producto adicional marcado como "Muestra" con stock 0.</span>
+                    </label>
                 </div>
 
 

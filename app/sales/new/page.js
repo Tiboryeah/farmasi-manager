@@ -11,6 +11,7 @@ export default function NewSalePage() {
     const [step, setStep] = useState(1);
     const [cart, setCart] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
+    const [selectedCategory, setSelectedCategory] = useState("Todas");
     const [products, setProducts] = useState([]);
     const [customerName, setCustomerName] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("Efectivo");
@@ -20,17 +21,29 @@ export default function NewSalePage() {
         getProducts().then(setProducts);
     }, []);
 
-    const filteredProducts = products.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const categories = ["Todas", ...new Set(products.map(p => p.category))].filter(Boolean);
+
+    const filteredProducts = products.filter(p => !p.isTest).filter(p => {
+        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = selectedCategory === "Todas" || p.category === selectedCategory;
+        return matchesSearch && matchesCategory;
+    });
 
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
     const totalProfit = cart.reduce((sum, item) => sum + ((item.price - item.cost) * item.qty), 0);
 
     const addToCart = (product) => {
+        if (product.stock <= 0) {
+            alert(`¡Sin stock! No puedes añadir ${product.name} porque el stock es 0.`);
+            return;
+        }
         setCart(prev => {
             const existing = prev.find(i => i.id === product.id);
             if (existing) {
+                if (existing.qty + 1 > product.stock) {
+                    alert(`¡Stock insuficiente! Solo quedan ${product.stock} unidades de ${product.name}.`);
+                    return prev;
+                }
                 return prev.map(i => i.id === product.id ? { ...i, qty: i.qty + 1 } : i);
             }
             return [...prev, { ...product, qty: 1, originalPrice: product.price }];
@@ -38,6 +51,14 @@ export default function NewSalePage() {
     };
 
     const updateCartItem = (id, field, value) => {
+        if (field === 'qty') {
+            const item = cart.find(i => i.id === id);
+            const product = products.find(p => p.id === id);
+            if (product && value > product.stock) {
+                alert(`¡Stock insuficiente! Solo quedan ${product.stock} unidades de ${product.name}.`);
+                return;
+            }
+        }
         setCart(prev => prev.map(item => {
             if (item.id === id) {
                 return { ...item, [field]: value };
@@ -77,17 +98,46 @@ export default function NewSalePage() {
                     />
                 </div>
 
+                <div className="mb-4">
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {categories.map(cat => (
+                            <button
+                                key={cat}
+                                onClick={() => setSelectedCategory(cat)}
+                                className={`px-4 py-2 rounded-full whitespace-nowrap text-sm font-bold transition-all ${selectedCategory === cat ? 'bg-white text-zinc-900 shadow-lg' : 'bg-zinc-900 text-zinc-400 hover:text-white'}`}
+                            >
+                                {cat}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 <div className="flex flex-col gap-3 overflow-y-auto flex-1">
                     {filteredProducts.map(product => {
                         const inCart = cart.find(i => i.id === product.id);
                         return (
                             <div key={product.id} className="card flex items-center justify-between p-3" onClick={() => addToCart(product)}>
                                 <div className="flex items-center gap-3">
-                                    <div className="text-2xl">{product.image}</div>
+                                    {product.image && product.image.startsWith('data:image') ? (
+                                        <img src={product.image} alt={product.name} className="h-12 w-12 rounded-lg object-cover bg-zinc-800" />
+                                    ) : (
+                                        <div className="text-2xl h-12 w-12 rounded-lg bg-zinc-800 flex items-center justify-center">{product.image || "📦"}</div>
+                                    )}
                                     <div>
-                                        <div className="font-bold text-sm">{product.name}</div>
-                                        <div className="text-primary font-bold">${product.price}</div>
-                                        <div className="text-xs text-secondary">Stock: {product.stock}</div>
+                                        <div className="font-bold text-sm text-white">{product.name}</div>
+                                        {product.attributes && product.attributes.length > 0 && (
+                                            <div className="flex flex-wrap gap-1 mt-0.5">
+                                                {product.attributes.map((attr, idx) => (
+                                                    <span key={idx} className="text-[10px] text-zinc-500">
+                                                        {attr.name}: <span className="text-zinc-400">{attr.value}</span>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div className="flex gap-2 items-end">
+                                            <div className="text-primary font-bold">${product.price}</div>
+                                            <div className="text-[10px] text-secondary mb-0.5">Stock: {product.stock}</div>
+                                        </div>
                                     </div>
                                 </div>
 

@@ -174,8 +174,28 @@ export async function createProduct(data) {
     stock: parseInt(data.stock),
     minStock: parseInt(data.minStock || 5),
     image: data.image || '📦',
-    type: data.type || 'product'
+    type: data.type || 'product',
+    attributes: data.attributes || [],
+    isTest: data.isTest || false
   });
+
+  // If user requested a test copy (only for new products)
+  if (data.createTestCopy) {
+    await Product.create({
+      userId: session.userId,
+      name: `[PRUEBA] ${data.name}`,
+      code: data.code ? `${data.code}-TEST` : '',
+      category: data.category || 'General',
+      cost: parseFloat(data.cost),
+      price: parseFloat(data.price), // Maybe 0? Or same price? Usually testers have price 0 or cost only. Let's keep same.
+      stock: 0, // Start with 0 for test copy
+      minStock: 1,
+      image: data.image || '📦',
+      type: 'sample', // Usually testers are samples/expenses
+      attributes: data.attributes || [],
+      isTest: true
+    });
+  }
 
   // Initial Inventory Movement
   await InventoryMovement.create({
@@ -253,6 +273,7 @@ export async function updateProduct(id, data) {
   product.minStock = parseInt(data.minStock || 5);
   if (data.image) product.image = data.image;
   if (data.type) product.type = data.type;
+  if (data.attributes) product.attributes = data.attributes;
 
   await product.save();
 
@@ -290,6 +311,14 @@ export async function createSale(cart, customerName = 'Consumidor Final', paymen
 
   for (const item of cart) {
     const qty = parseInt(item.qty);
+
+    // Check stock explicitly before update
+    const currentProduct = await Product.findOne({ _id: item.id, userId: session.userId });
+    if (!currentProduct) throw new Error(`Producto no encontrado: ${item.name}`);
+    if (currentProduct.stock < qty) {
+      throw new Error(`Stock insuficiente para ${currentProduct.name}. Solo quedan ${currentProduct.stock} unidades.`);
+    }
+
     const profit = (item.price - item.cost) * qty;
 
     total += item.price * qty;

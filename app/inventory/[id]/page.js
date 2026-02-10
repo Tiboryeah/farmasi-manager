@@ -28,10 +28,29 @@ export default function ProductDetailPage({ params }) {
     useEffect(() => {
         if (id) getProduct(id).then(p => {
             setCurrentProduct(p);
-            setFormData(p);
+            setCurrentProduct(p);
+            setFormData({ ...p, attributes: p.attributes || [] });
             setPreview(p.image && p.image.startsWith('data:image') ? p.image : null);
         });
     }, [id]);
+
+    const handleAddAttribute = () => {
+        setFormData(prev => ({
+            ...prev,
+            attributes: [...(prev.attributes || []), { name: '', value: '' }]
+        }));
+    };
+
+    const handleAttributeChange = (index, field, value) => {
+        const newAttributes = [...(formData.attributes || [])];
+        newAttributes[index][field] = value;
+        setFormData({ ...formData, attributes: newAttributes });
+    };
+
+    const handleRemoveAttribute = (index) => {
+        const newAttributes = (formData.attributes || []).filter((_, i) => i !== index);
+        setFormData({ ...formData, attributes: newAttributes });
+    };
 
     const handleAdjust = async (e) => {
         e.preventDefault();
@@ -185,6 +204,34 @@ export default function ProductDetailPage({ params }) {
                         </div>
                     </div>
 
+                    {/* Attributes Section */}
+                    <div className="bg-zinc-900/50 p-4 rounded-xl border border-zinc-800">
+                        <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm font-bold text-secondary">Atributos Adicionales</label>
+                            <button type="button" onClick={handleAddAttribute} className="text-xs btn btn-sm btn-ghost text-primary">+ Añadir</button>
+                        </div>
+                        {(!formData.attributes || formData.attributes.length === 0) && <p className="text-xs text-zinc-600 italic">Sin atributos</p>}
+                        <div className="flex flex-col gap-2">
+                            {(formData.attributes || []).map((attr, index) => (
+                                <div key={index} className="flex gap-2">
+                                    <input
+                                        placeholder="Color"
+                                        value={attr.name}
+                                        onChange={(e) => handleAttributeChange(index, 'name', e.target.value)}
+                                        className="input text-xs flex-1"
+                                    />
+                                    <input
+                                        placeholder="Rojo"
+                                        value={attr.value}
+                                        onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
+                                        className="input text-xs flex-1"
+                                    />
+                                    <button type="button" onClick={() => handleRemoveAttribute(index)} className="btn btn-square btn-xs btn-ghost text-error">✕</button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
                     <button type="submit" className="btn btn-primary w-full py-3 mt-4 flex items-center justify-center gap-2">
                         <Save size={20} /> Guardar Cambios
                     </button>
@@ -284,6 +331,26 @@ export default function ProductDetailPage({ params }) {
                     <span className="text-success">+${(currentProduct.price - currentProduct.cost).toFixed(2)}</span>
                 </div>
             </div>
+
+            {currentProduct.attributes && currentProduct.attributes.length > 0 && (
+                <div className="card p-4 mt-4">
+                    <h2 className="text-sm font-bold mb-2 text-secondary">Atributos</h2>
+                    <div className="flex flex-col gap-2">
+                        {currentProduct.attributes.map((attr, idx) => (
+                            <div key={idx} className="flex justify-between items-center border-b border-zinc-800 pb-2 last:border-0 last:pb-0">
+                                <span className="text-zinc-500 text-xs uppercase tracking-wider">{attr.name}</span>
+                                <span className="font-bold text-sm">{attr.value}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {currentProduct.isTest && (
+                <div className="mt-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl text-yellow-500 text-center text-sm font-bold uppercase tracking-widest">
+                    ⚠️ Inventario de Prueba
+                </div>
+            )}
         </div>
     );
 }
