@@ -121,39 +121,39 @@ function NewProductForm() {
     return (
         <div className="flex flex-col h-full pb-20">
             <header className="flex items-center gap-3 py-4 mb-2">
-                <Link href="/inventory" className="btn btn-ghost p-1 hover:bg-zinc-100 rounded-full text-zinc-500"><ChevronLeft /></Link>
+                <Link href="/inventory" className="btn btn-ghost p-1 hover:bg-[var(--color-surface-hover)] rounded-full text-[var(--color-text-muted)]"><ChevronLeft /></Link>
                 <div className="flex-1">
-                    <h1 className="text-xl font-bold text-zinc-900">{cloneId ? 'Nueva Variante' : 'Nuevo Producto'}</h1>
-                    {cloneId && <p className="text-xs text-zinc-500">Copiando datos de producto existente</p>}
+                    <h1 className="text-xl font-bold text-[var(--color-text-main)]">{cloneId ? 'Nueva Variante' : 'Nuevo Producto'}</h1>
+                    {cloneId && <p className="text-xs text-[var(--color-text-muted)]">Copiando datos de producto existente</p>}
                 </div>
             </header>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div className="flex gap-2 p-1 bg-zinc-100 rounded-xl mb-4 border border-zinc-200">
+                <div className="flex gap-2 p-1 bg-[var(--color-surface-highlight)] rounded-xl mb-4 border border-[var(--color-glass-border)]">
                     <button
                         type="button"
                         onClick={() => setFormData({ ...formData, type: 'product' })}
-                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'product' ? 'bg-white text-zinc-900 shadow-sm border border-zinc-200' : 'text-zinc-500 hover:text-zinc-700'}`}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'product' ? 'bg-[var(--color-surface)] text-[var(--color-text-main)] shadow-sm border border-[var(--color-glass-border)]' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
                     >
                         Producto para Venta
                     </button>
                     <button
                         type="button"
                         onClick={() => setFormData({ ...formData, type: 'sample' })}
-                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'sample' ? 'bg-primary text-white shadow-md' : 'text-zinc-500 hover:text-zinc-700'}`}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${formData.type === 'sample' ? 'bg-primary text-white shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
                     >
                         Muestra (Gasto)
                     </button>
                 </div>
 
                 <div className="flex flex-col items-center gap-4 mb-4">
-                    <div className="h-40 w-40 rounded-3xl bg-zinc-50 border-2 border-dashed border-zinc-300 flex items-center justify-center overflow-hidden relative group">
+                    <div className="h-40 w-40 rounded-3xl bg-[var(--color-surface-highlight)] border-2 border-dashed border-[var(--color-glass-border)] flex items-center justify-center overflow-hidden relative group transition-all hover:border-primary/50">
                         {preview ? (
                             <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                         ) : (
-                            <div className="flex flex-col items-center text-zinc-400">
+                            <div className="flex flex-col items-center text-[var(--color-text-muted)]">
                                 <Save size={32} className="mb-2 opacity-30" />
-                                <span className="text-xs font-bold uppercase tracking-widest">Sin Foto</span>
+                                <span className="text-xs font-bold uppercase tracking-widest text-center">Añadir Foto</span>
                             </div>
                         )}
                         <input
@@ -166,56 +166,56 @@ function NewProductForm() {
                             <span className="text-white text-xs font-bold uppercase">Cambiar Foto</span>
                         </div>
                     </div>
-                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest text-center">
+                    <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest text-center">
                         Haz clic en el recuadro para subir una foto real del producto
                     </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Nombre</label>
-                        <input name="name" required className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="Ej. Rimel Zen..." onChange={handleChange} />
+                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Nombre</label>
+                        <input name="name" value={formData.name} required className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="Ej. Rimel Zen..." onChange={handleChange} />
                     </div>
                     <div>
-                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Código (Opcional)</label>
-                        <input name="code" className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="Ej. RZ-01" onChange={handleChange} />
+                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Código (Opcional)</label>
+                        <input name="code" value={formData.code} className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="Ej. RZ-01" onChange={handleChange} />
                     </div>
                 </div>
 
                 <div>
-                    <label className="text-sm font-bold text-zinc-600 mb-1 block">Categoría</label>
-                    <input name="category" className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="Ej. Ojos, Rostro, Labios..." onChange={handleChange} />
+                    <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Categoría</label>
+                    <input name="category" value={formData.category} className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="Ej. Ojos, Rostro, Labios..." onChange={handleChange} />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Costo ($)</label>
-                        <input name="cost" type="number" step="0.5" required className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="0.00" onChange={handleChange} />
+                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Costo ($)</label>
+                        <input name="cost" value={formData.cost} type="number" step="0.5" required className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="0.00" onChange={handleChange} />
                     </div>
                     <div>
-                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Precio Sugerido ($)</label>
-                        <input name="price" type="number" step="0.5" required className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="0.00" onChange={handleChange} />
+                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Precio Sugerido ($)</label>
+                        <input name="price" value={formData.price} type="number" step="0.5" required className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="0.00" onChange={handleChange} />
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Stock Inicial</label>
-                        <input name="stock" type="number" required className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" placeholder="0" onChange={handleChange} />
+                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Stock Inicial</label>
+                        <input name="stock" value={formData.stock} type="number" required className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="0" onChange={handleChange} />
                     </div>
                     <div>
-                        <label className="text-sm font-bold text-zinc-600 mb-1 block">Stock Mínimo</label>
-                        <input name="minStock" type="number" className="input bg-white border-zinc-200 text-zinc-900 shadow-sm focus:border-primary focus:ring-primary/20" defaultValue="5" onChange={handleChange} />
+                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Stock Mínimo</label>
+                        <input name="minStock" value={formData.minStock} type="number" className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" defaultValue="5" onChange={handleChange} />
                     </div>
                 </div>
 
                 {/* Attributes Section */}
-                <div className="bg-zinc-50 p-4 rounded-xl border border-zinc-200">
-                    <div className="flex items-center justify-between mb-2">
-                        <label className="text-sm font-bold text-zinc-700">Atributos Adicionales</label>
-                        <button type="button" onClick={handleAddAttribute} className="text-xs btn btn-sm btn-ghost text-primary hover:bg-primary/10">+ Añadir</button>
+                <div className="bg-[var(--color-surface-highlight)] p-4 rounded-xl border border-[var(--color-glass-border)]">
+                    <div className="flex items-center justify-between mb-3">
+                        <label className="text-sm font-bold text-[var(--color-text-main)]">Atributos Adicionales</label>
+                        <button type="button" onClick={handleAddAttribute} className="text-xs btn btn-sm btn-ghost text-primary hover:bg-primary/10 transition-colors">+ Añadir</button>
                     </div>
-                    {attributes.length === 0 && <p className="text-xs text-zinc-400 italic">Sin atributos (ej. Color, Sabor)</p>}
+                    {attributes.length === 0 && <p className="text-xs text-[var(--color-text-muted)] italic">Sin atributos (ej. Color, Sabor)</p>}
                     <div className="flex flex-col gap-2">
                         {attributes.map((attr, index) => (
                             <div key={index} className="flex gap-2">
@@ -223,37 +223,36 @@ function NewProductForm() {
                                     placeholder="Nombre (ej. Color)"
                                     value={attr.name}
                                     onChange={(e) => handleAttributeChange(index, 'name', e.target.value)}
-                                    className="input text-xs flex-1 bg-white border-zinc-200 text-zinc-900 shadow-sm"
+                                    className="input h-10 text-xs flex-1 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm"
                                 />
                                 <input
                                     placeholder="Valor (ej. Rojo)"
                                     value={attr.value}
                                     onChange={(e) => handleAttributeChange(index, 'value', e.target.value)}
-                                    className="input text-xs flex-1 bg-white border-zinc-200 text-zinc-900 shadow-sm"
+                                    className="input h-10 text-xs flex-1 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm"
                                 />
-                                <button type="button" onClick={() => handleRemoveAttribute(index)} className="btn btn-square btn-xs btn-ghost text-red-500 hover:bg-red-50">✕</button>
+                                <button type="button" onClick={() => handleRemoveAttribute(index)} className="btn btn-square btn-xs btn-ghost text-red-500 hover:bg-red-500/10">✕</button>
                             </div>
                         ))}
                     </div>
                 </div>
 
                 {/* Test Copy Checkbox */}
-                <div className="flex items-center gap-3 p-3 bg-zinc-50 rounded-xl border border-zinc-200">
+                <div className="flex items-center gap-3 p-4 bg-[var(--color-surface-highlight)] rounded-xl border border-[var(--color-glass-border)] transition-all hover:bg-[var(--color-surface-hover)]">
                     <input
                         type="checkbox"
                         id="testCopy"
                         checked={createTestCopy}
                         onChange={(e) => setCreateTestCopy(e.target.checked)}
-                        className="checkbox checkbox-primary border-zinc-300"
+                        className="checkbox checkbox-primary border-[var(--color-glass-border)] h-5 w-5"
                     />
-                    <label htmlFor="testCopy" className="text-sm cursor-pointer select-none text-zinc-700">
-                        Crear copia para <b>Inventario de Pruebas</b>
-                        <span className="block text-xs text-zinc-500 mt-0.5">Se creará un producto adicional marcado como "Muestra" con stock 0.</span>
+                    <label htmlFor="testCopy" className="text-sm cursor-pointer select-none text-[var(--color-text-main)]">
+                        Crear copia para <b className="text-primary">Inventario de Pruebas</b>
+                        <span className="block text-xs text-[var(--color-text-muted)] mt-0.5">Se creará un producto adicional marcado como "Muestra" con stock 0.</span>
                     </label>
                 </div>
 
-
-                <button type="submit" className="btn btn-primary w-full py-3 mt-4 flex items-center justify-center gap-2">
+                <button type="submit" className="btn btn-primary w-full py-4 mt-4 flex items-center justify-center gap-2 text-base shadow-xl">
                     <Save size={20} /> Guardar Producto
                 </button>
             </form>

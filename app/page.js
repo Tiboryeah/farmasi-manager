@@ -72,54 +72,54 @@ export default function Home() {
 
       {/* Main Stats Grid */}
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-4 rounded-2xl">
-          <div className="flex items-center justify-between text-[var(--color-text-muted)] mb-2">
-            <span className="text-xs uppercase font-bold tracking-wider">Ventas Hoy</span>
-            <div className="p-2 bg-pink-50 rounded-lg text-primary">
+        <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-5 rounded-2xl border-l-4 border-l-pink-500">
+          <div className="flex items-center justify-between text-[var(--color-text-muted)] mb-3">
+            <span className="text-[10px] uppercase font-black tracking-widest">Ventas Hoy</span>
+            <div className="p-2 bg-pink-500/10 rounded-xl text-pink-500 border border-pink-500/20">
               <DollarSign size={18} />
             </div>
           </div>
-          <div className="stat-value text-2xl font-black text-[var(--color-text-main)]">${stats.today.revenue.toFixed(2)}</div>
-          <div className={`text-xs flex items-center gap-1 font-bold mt-1 ${percentageChange >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
+          <div className="stat-value text-2xl font-black text-[var(--color-text-main)]">${stats.today.revenue.toLocaleString()}</div>
+          <div className={`text-[10px] flex items-center gap-1 font-black uppercase mt-1 ${percentageChange >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
             {percentageChange >= 0 ? <TrendingUp size={14} /> : <TrendingDown size={14} />}
             {Math.abs(percentageChange).toFixed(1)}% vs ayer
           </div>
         </div>
 
-        <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-4 rounded-2xl">
-          <div className="flex items-center justify-between text-[var(--color-text-muted)] mb-2">
-            <span className="text-xs uppercase font-bold tracking-wider">Ganancia</span>
-            <div className="p-2 bg-emerald-50 rounded-lg text-emerald-500">
+        <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-5 rounded-2xl border-l-4 border-l-emerald-500">
+          <div className="flex items-center justify-between text-[var(--color-text-muted)] mb-3">
+            <span className="text-[10px] uppercase font-black tracking-widest">Ganancia</span>
+            <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-500 border border-emerald-500/20">
               <TrendingUp size={18} />
             </div>
           </div>
-          <div className="stat-value text-2xl font-black text-emerald-500">${stats.today.profit.toFixed(2)}</div>
-          <div className="text-xs text-[var(--color-text-muted)] font-bold mt-1">Margen estimado</div>
+          <div className="stat-value text-2xl font-black text-emerald-500">${stats.today.profit.toLocaleString()}</div>
+          <div className="text-[10px] text-[var(--color-text-muted)] font-black uppercase mt-1">Margen estimado</div>
         </div>
 
-        <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-4 rounded-2xl">
-          <div className="flex items-center justify-between text-[var(--color-text-muted)] mb-2">
-            <span className="text-xs uppercase font-bold tracking-wider">Stock</span>
-            <div className="p-2 bg-[var(--color-surface-highlight)] rounded-lg text-[var(--color-text-muted)]">
+        <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-5 rounded-2xl border-l-4 border-l-amber-500">
+          <div className="flex items-center justify-between text-[var(--color-text-muted)] mb-3">
+            <span className="text-[10px] uppercase font-black tracking-widest">Stock</span>
+            <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 border border-amber-500/20">
               <Package size={18} />
             </div>
           </div>
           <div className="stat-value text-2xl font-black text-[var(--color-text-main)]">{stats.totalStock || 0}</div>
-          <div className="text-xs text-[var(--color-text-muted)] font-bold mt-1">
+          <div className="text-[10px] text-[var(--color-text-muted)] font-black uppercase mt-1">
             {stats.totalProducts || 0} Prod.
             {stats.lowStock > 0 && <span className="text-rose-500 ml-1">({stats.lowStock} bajos)</span>}
           </div>
         </div>
 
-        <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-4 rounded-2xl">
-          <div className="flex items-center justify-between text-[var(--color-text-muted)] mb-2">
-            <span className="text-xs uppercase font-bold tracking-wider">Ventas Mes</span>
-            <div className="p-2 bg-blue-50 rounded-lg text-blue-500">
+        <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-5 rounded-2xl border-l-4 border-l-blue-500">
+          <div className="flex items-center justify-between text-[var(--color-text-muted)] mb-3">
+            <span className="text-[10px] uppercase font-black tracking-widest">Ventas Mes</span>
+            <div className="p-2 bg-blue-500/10 rounded-xl text-blue-500 border border-blue-500/20">
               <ShoppingCart size={18} />
             </div>
           </div>
           <div className="stat-value text-2xl font-black text-[var(--color-text-main)]">${stats.month.revenue.toLocaleString()}</div>
-          <div className="text-xs text-[var(--color-text-muted)] font-bold mt-1">Ciclo actual</div>
+          <div className="text-[10px] text-[var(--color-text-muted)] font-black uppercase mt-1">Ciclo actual</div>
         </div>
       </section>
 

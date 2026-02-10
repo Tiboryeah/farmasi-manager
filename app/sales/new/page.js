@@ -156,10 +156,12 @@ export default function NewSalePage() {
                                         </div>
 
                                         {inCart ? (
-                                            <div className="badge bg-green-100 text-green-700 border border-green-200 font-bold px-2 py-1 rounded-lg text-xs shrink-0 whitespace-nowrap">{inCart.qty} en carrito</div>
+                                            <div className="badge bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-black px-3 py-1.5 rounded-xl text-[10px] uppercase tracking-widest shrink-0 whitespace-nowrap shadow-sm">
+                                                {inCart.qty} en carrito
+                                            </div>
                                         ) : (
-                                            <button className="btn btn-outline p-2 rounded-full border-dashed border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-primary hover:border-primary shrink-0">
-                                                <Plus size={18} />
+                                            <button className="btn btn-outline h-10 w-10 flex items-center justify-center rounded-full border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-primary hover:border-primary shrink-0 transition-all bg-[var(--color-surface)]">
+                                                <Plus size={20} />
                                             </button>
                                         )}
                                     </div>
@@ -169,17 +171,17 @@ export default function NewSalePage() {
                     </div>
 
                     {cart.length > 0 && (
-                        <div className="absolute bottom-4 left-4 right-4 z-50 animate-fade-in md:left-[calc(50%-300px)] md:right-auto md:w-[600px] mb-20 md:mb-0">
+                        <div className="absolute bottom-4 left-4 right-4 z-50 animate-fade-in md:left-[calc(50%-250px)] md:right-auto md:w-[500px] mb-20 md:mb-4">
                             <button
                                 onClick={() => setStep(2)}
-                                className="bg-zinc-900 text-white p-4 rounded-2xl w-full shadow-2xl flex justify-between items-center border border-zinc-700 hover:scale-[1.02] transition-transform"
+                                className="bg-[var(--color-text-main)] text-[var(--color-surface)] p-5 rounded-3xl w-full shadow-2xl flex justify-between items-center border border-[var(--color-glass-border)] hover:scale-[1.03] active:scale-95 transition-all"
                             >
                                 <div className="flex flex-col items-start px-2">
-                                    <span className="text-xs opacity-70 font-medium uppercase tracking-widest">{cart.length} productos</span>
-                                    <span className="text-xl font-black">${cartTotal.toFixed(2)}</span>
+                                    <span className="text-[10px] opacity-70 font-black uppercase tracking-widest">{cart.length} productos</span>
+                                    <span className="text-2xl font-black">${cartTotal.toLocaleString()}</span>
                                 </div>
-                                <div className="flex items-center gap-2 bg-white/10 px-4 py-2 rounded-xl font-bold text-sm backdrop-blur-md">
-                                    Continuar <ArrowRight size={18} />
+                                <div className="flex items-center gap-2 bg-white/10 px-6 py-3 rounded-2xl font-black uppercase tracking-widest text-xs backdrop-blur-md border border-white/5">
+                                    Continuar <ArrowRight size={20} />
                                 </div>
                             </button>
                         </div>

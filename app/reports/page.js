@@ -257,27 +257,27 @@ export default function ReportsPage() {
         <div className="flex flex-col gap-12 animate-fade-in w-full pb-20">
             <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-zinc-900">Reportes Financieros</h1>
-                    <p className="text-zinc-500 text-sm mt-1">Análisis profundo del rendimiento de tu negocio</p>
+                    <h1 className="text-3xl font-bold text-[var(--color-text-main)]">Reportes Financieros</h1>
+                    <p className="text-[var(--color-text-muted)] text-sm mt-1">Análisis profundo del rendimiento de tu negocio</p>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="bg-white border border-zinc-200 p-1 rounded-2xl flex shadow-sm">
+                    <div className="bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] p-1 rounded-2xl flex shadow-sm">
                         <button
                             onClick={() => setTimeFrame('week')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'week' ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900'}`}
+                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'week' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
                         >
                             Vista Semanal
                         </button>
                         <button
                             onClick={() => setTimeFrame('month')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'month' ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900'}`}
+                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'month' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
                         >
                             Mensual
                         </button>
                         <button
                             onClick={() => setTimeFrame('year')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'year' ? 'bg-zinc-900 text-white shadow-md' : 'text-zinc-500 hover:text-zinc-900'}`}
+                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'year' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
                         >
                             Anual
                         </button>
@@ -286,7 +286,7 @@ export default function ReportsPage() {
                     <button
                         onClick={handleDownloadBackup}
                         disabled={isBackingUp}
-                        className={`btn h-12 rounded-2xl flex items-center gap-2 px-6 shadow-sm ${isBackingUp ? 'opacity-50 cursor-not-allowed bg-zinc-100 text-zinc-400' : 'bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100'}`}
+                        className={`btn h-12 rounded-2xl flex items-center gap-2 px-6 shadow-sm transition-all ${isBackingUp ? 'opacity-50 cursor-not-allowed bg-[var(--color-surface-highlight)] text-[var(--color-text-muted)]' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20'}`}
                     >
                         <ShieldCheck size={18} />
                         <span>{isBackingUp ? 'Procesando...' : 'Respaldo Nube'}</span>
@@ -294,182 +294,188 @@ export default function ReportsPage() {
                 </div>
             </header>
 
-            <section className="card p-6 bg-zinc-900 text-white border-zinc-800 shadow-xl rounded-2xl">
-                <div className="flex items-center gap-4 mb-6">
-                    <div className="h-12 w-12 rounded-2xl bg-white/10 flex items-center justify-center text-white">
+            <section className="card p-6 bg-[var(--color-surface)] text-[var(--color-text-main)] border-[var(--color-glass-border)] shadow-xl rounded-2xl overflow-hidden relative">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
+                <div className="flex items-center gap-4 mb-8">
+                    <div className="h-12 w-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary border border-primary/20">
                         <Download size={24} />
                     </div>
                     <div>
-                        <h2 className="text-xl font-bold text-white">Exportación de Datos</h2>
-                        <p className="text-sm text-zinc-400 font-medium">Descarga tus reportes detallados en formato Excel</p>
+                        <h2 className="text-xl font-bold text-[var(--color-text-main)]">Exportación de Datos</h2>
+                        <p className="text-sm text-[var(--color-text-muted)] font-medium">Descarga tus reportes detallados en formato Excel</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <button onClick={() => handleDownload('day')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
-                        <Calendar size={24} className="text-zinc-400 group-hover:text-white" />
-                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-500 group-hover:text-white">Ventas del Día</span>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 relative z-10">
+                    <button onClick={() => handleDownload('day')} className="flex flex-col items-center gap-3 p-4 rounded-xl bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] hover:bg-[var(--color-surface-hover)] transition-all group">
+                        <Calendar size={24} className="text-[var(--color-text-muted)] group-hover:text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-text-main)]">Ventas del Día</span>
                     </button>
-                    <button onClick={() => handleDownload('week')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
-                        <TrendingUp size={24} className="text-zinc-400 group-hover:text-white" />
-                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-500 group-hover:text-white">Esta Semana</span>
+                    <button onClick={() => handleDownload('week')} className="flex flex-col items-center gap-3 p-4 rounded-xl bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] hover:bg-[var(--color-surface-hover)] transition-all group">
+                        <TrendingUp size={24} className="text-[var(--color-text-muted)] group-hover:text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-text-main)]">Esta Semana</span>
                     </button>
-                    <button onClick={() => handleDownload('month')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all group">
-                        <BarChart3 size={24} className="text-zinc-400 group-hover:text-white" />
-                        <span className="text-xs font-black uppercase tracking-tighter text-zinc-500 group-hover:text-white">Todo el Mes</span>
+                    <button onClick={() => handleDownload('month')} className="flex flex-col items-center gap-3 p-4 rounded-xl bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] hover:bg-[var(--color-surface-hover)] transition-all group">
+                        <BarChart3 size={24} className="text-[var(--color-text-muted)] group-hover:text-primary" />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] group-hover:text-[var(--color-text-main)]">Todo el Mes</span>
                     </button>
-                    <button onClick={() => handleDownload('history')} className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-primary text-white border border-primary hover:scale-[1.02] transition-all group shadow-lg shadow-primary/30">
+                    <button onClick={() => handleDownload('history')} className="flex flex-col items-center gap-3 p-4 rounded-xl bg-primary text-white border border-primary hover:scale-[1.02] active:scale-95 transition-all group shadow-lg shadow-primary/20">
                         <History size={24} className="text-white" />
-                        <span className="text-xs font-black uppercase tracking-tighter text-white/80 group-hover:text-white">Historial Total</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/90 group-hover:text-white">Exportación Total</span>
                     </button>
                 </div>
             </section>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="card stat-card bg-white border-zinc-100 shadow-sm p-4 rounded-2xl border-l-4 border-l-blue-500">
-                    <div className="flex justify-between items-start text-zinc-500 mb-2">
-                        <span className="text-xs uppercase font-bold tracking-widest">Ingresos Totales</span>
-                        <div className="bg-blue-50 p-2 rounded-xl text-blue-500">
+                <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-5 rounded-2xl border-l-4 border-l-blue-500">
+                    <div className="flex justify-between items-start text-[var(--color-text-muted)] mb-3">
+                        <span className="text-[10px] uppercase font-black tracking-widest">Ingresos Totales</span>
+                        <div className="bg-blue-500/10 p-2 rounded-xl text-blue-500 border border-blue-500/20">
                             <DollarSign size={20} />
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value text-2xl font-black text-zinc-900">${kpis.totalRevenue.toLocaleString()}</div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">
+                        <div className="stat-value text-2xl font-black text-[var(--color-text-main)]">${kpis.totalRevenue.toLocaleString()}</div>
+                        <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase mt-1">
                             {timeFrame === 'year' ? 'En el año actual' : `Últimos ${timeFrame === 'week' ? '7' : '30'} días`}
                         </p>
                     </div>
                 </div>
 
-                <div className="card stat-card bg-white border-zinc-100 shadow-sm p-4 rounded-2xl border-l-4 border-l-emerald-500">
-                    <div className="flex justify-between items-start text-emerald-600 mb-2">
-                        <span className="text-xs uppercase font-bold tracking-widest">Ganancia Neta</span>
-                        <div className="bg-emerald-50 p-2 rounded-xl">
+                <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-5 rounded-2xl border-l-4 border-l-emerald-500">
+                    <div className="flex justify-between items-start text-emerald-500 mb-3">
+                        <span className="text-[10px] uppercase font-black tracking-widest">Ganancia Neta</span>
+                        <div className="bg-emerald-500/10 p-2 rounded-xl border border-emerald-500/20">
                             <TrendingUp size={20} />
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value text-2xl font-black text-emerald-600">${kpis.totalProfit.toLocaleString()}</div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">
+                        <div className="stat-value text-2xl font-black text-emerald-500">${kpis.totalProfit.toLocaleString()}</div>
+                        <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase mt-1">
                             Bruta: ${kpis.grossProfit.toLocaleString()} | Gastos: -${kpis.totalExpenses.toLocaleString()}
                         </p>
                     </div>
                 </div>
 
-                <div className="card stat-card bg-white border-zinc-100 shadow-sm p-4 rounded-2xl border-l-4 border-l-purple-500">
-                    <div className="flex justify-between items-start text-zinc-500 mb-2">
-                        <span className="text-xs uppercase font-bold tracking-widest">Ticket Prom.</span>
-                        <div className="bg-purple-50 p-2 rounded-xl text-purple-500">
+                <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-5 rounded-2xl border-l-4 border-l-purple-500">
+                    <div className="flex justify-between items-start text-[var(--color-text-muted)] mb-3">
+                        <span className="text-[10px] uppercase font-black tracking-widest">Ticket Prom.</span>
+                        <div className="bg-purple-500/10 p-2 rounded-xl text-purple-500 border border-purple-500/20">
                             <BarChart3 size={20} />
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value text-2xl font-black text-zinc-900">${kpis.avgTicket.toFixed(0)}</div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Promedio x venta</p>
+                        <div className="stat-value text-2xl font-black text-[var(--color-text-main)]">${kpis.avgTicket.toFixed(0)}</div>
+                        <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase mt-1">Promedio por Venta</p>
                     </div>
                 </div>
 
-                <div className="card stat-card bg-white border-zinc-100 shadow-sm p-4 rounded-2xl border-l-4 border-l-primary">
-                    <div className="flex justify-between items-start text-primary mb-2">
-                        <span className="text-xs uppercase font-bold tracking-widest">Margen Bruto</span>
-                        <div className="bg-primary/10 p-2 rounded-xl">
+                <div className="card stat-card bg-[var(--color-surface)] border-[var(--color-glass-border)] shadow-sm p-5 rounded-2xl border-l-4 border-l-primary">
+                    <div className="flex justify-between items-start text-primary mb-3">
+                        <span className="text-[10px] uppercase font-black tracking-widest">Margen Bruto</span>
+                        <div className="bg-primary/10 p-2 rounded-xl border border-primary/20">
                             <Filter size={20} />
                         </div>
                     </div>
                     <div>
                         <div className="stat-value text-2xl font-black text-primary">{kpis.margin.toFixed(1)}%</div>
-                        <p className="text-[10px] text-zinc-400 font-bold uppercase mt-1">Rentabilidad</p>
+                        <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase mt-1">Rentabilidad</p>
                     </div>
                 </div>
             </div>
 
-            <section className="card p-0 overflow-hidden bg-white border border-zinc-200 shadow-sm rounded-2xl">
-                <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50">
+            <section className="card p-0 overflow-hidden bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl rounded-2xl">
+                <div className="p-6 border-b border-[var(--color-glass-border)] flex items-center justify-between bg-[var(--color-surface-highlight)]">
                     <div className="flex items-center gap-3">
-                        <div className="bg-white p-2 rounded-xl text-primary shadow-sm border border-zinc-100">
+                        <div className="bg-[var(--color-surface)] p-2 rounded-xl text-primary shadow-sm border border-[var(--color-glass-border)]">
                             <BarChart3 size={24} />
                         </div>
                         <div>
-                            <h2 className="text-lg font-bold text-zinc-900">Rendimiento Histórico</h2>
-                            <p className="text-xs text-zinc-500">Evolución de ventas y ganancias</p>
+                            <h2 className="text-lg font-bold text-[var(--color-text-main)]">Rendimiento Histórico</h2>
+                            <p className="text-xs text-[var(--color-text-muted)]">Evolución de ventas y ganancias</p>
                         </div>
                     </div>
                 </div>
-                <div className="p-6 h-[350px] w-full">
+                <div className="p-6 h-[400px] w-full bg-[var(--color-surface)]">
                     <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#e4e4e7" vertical={false} />
+                        <BarChart data={chartData} margin={{ top: 20, right: 20, left: 10, bottom: 10 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="var(--color-glass-border)" vertical={false} />
                             <XAxis
                                 dataKey="date"
-                                stroke="#71717a"
-                                fontSize={11}
+                                stroke="var(--color-text-muted)"
+                                fontSize={10}
                                 tickLine={false}
                                 axisLine={false}
                                 dy={10}
+                                fontWeight="bold"
                             />
                             <YAxis
-                                stroke="#71717a"
-                                fontSize={11}
+                                stroke="var(--color-text-muted)"
+                                fontSize={10}
                                 tickLine={false}
                                 axisLine={false}
                                 tickFormatter={(value) => `$${value}`}
+                                fontWeight="bold"
                             />
                             <Tooltip
                                 contentStyle={{
-                                    backgroundColor: '#ffffff',
-                                    borderColor: '#e4e4e7',
-                                    borderRadius: '12px',
-                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
-                                    color: '#09090b'
+                                    backgroundColor: 'var(--color-surface)',
+                                    borderColor: 'var(--color-glass-border)',
+                                    borderRadius: '16px',
+                                    boxShadow: 'var(--shadow-hover)',
+                                    color: 'var(--color-text-main)',
+                                    fontSize: '12px',
+                                    fontWeight: 'bold',
+                                    border: '1px solid var(--color-glass-border)'
                                 }}
-                                itemStyle={{ color: '#09090b' }}
-                                cursor={{ fill: 'rgba(0,0,0,0.03)' }}
+                                itemStyle={{ color: 'var(--color-text-main)' }}
+                                cursor={{ fill: 'var(--color-surface-hover)', opacity: 0.4 }}
                             />
-                            <Legend verticalAlign="top" height={36} iconType="circle" />
-                            <Bar name="Ventas" dataKey="ventas" fill="var(--primary)" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                            <Bar name="Ganancia" dataKey="ganancia" fill="#10b981" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                            <Legend verticalAlign="top" height={40} iconType="circle" />
+                            <Bar name="Ventas" dataKey="ventas" fill="var(--color-primary)" radius={[6, 6, 0, 0]} maxBarSize={40} />
+                            <Bar name="Ganancia" dataKey="ganancia" fill="var(--color-success)" radius={[6, 6, 0, 0]} maxBarSize={40} />
                         </BarChart>
                     </ResponsiveContainer>
                 </div>
             </section>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <section className="card p-0 flex flex-col h-[400px] bg-white border border-zinc-200 shadow-sm rounded-2xl">
-                    <div className="p-6 border-b border-zinc-100 bg-zinc-50 flex justify-between items-center">
+                <section className="card p-0 flex flex-col h-[450px] bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl rounded-2xl overflow-hidden">
+                    <div className="p-6 border-b border-[var(--color-glass-border)] bg-[var(--color-surface-highlight)] flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <div className="bg-amber-50 p-2 rounded-xl text-amber-500 border border-amber-100">
+                            <div className="bg-amber-500/10 p-2 rounded-xl text-amber-500 border border-amber-500/20">
                                 <Package size={20} />
                             </div>
-                            <h2 className="font-bold text-zinc-900">Top Productos</h2>
+                            <h2 className="font-bold text-[var(--color-text-main)]">Top Productos</h2>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-auto">
+                    <div className="flex-1 overflow-auto bg-[var(--color-surface)]">
                         <table className="w-full">
                             <thead>
-                                <tr className="border-b border-zinc-100 text-xs text-zinc-400 uppercase tracking-wider">
-                                    <th className="p-4 text-left font-bold">Producto</th>
-                                    <th className="p-4 text-right font-bold">Ventas</th>
-                                    <th className="p-4 text-right font-bold">Total</th>
+                                <tr className="border-b border-[var(--color-glass-border)] text-[10px] text-[var(--color-text-muted)] uppercase font-black tracking-widest">
+                                    <th className="p-5 text-left">Producto</th>
+                                    <th className="p-5 text-right">Ventas</th>
+                                    <th className="p-5 text-right">Total</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {topProducts.map((prod, i) => (
-                                    <tr key={i} className="hover:bg-zinc-50 transition-colors border-b border-zinc-50 last:border-0">
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-3">
-                                                <span className="flex-shrink-0 w-6 h-6 rounded-lg bg-zinc-100 text-[10px] font-bold flex items-center justify-center text-zinc-500">
+                                    <tr key={i} className="hover:bg-[var(--color-surface-hover)] transition-all border-b border-[var(--color-glass-border)]/50 last:border-0 group">
+                                        <td className="p-5">
+                                            <div className="flex items-center gap-4">
+                                                <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-[var(--color-surface-highlight)] text-xs font-black flex items-center justify-center text-[var(--color-text-muted)] group-hover:bg-primary group-hover:text-white transition-all">
                                                     {i + 1}
                                                 </span>
-                                                <span className="font-medium truncate max-w-[150px] text-zinc-900">{prod.name}</span>
+                                                <span className="font-bold truncate max-w-[200px] text-[var(--color-text-main)]">{prod.name}</span>
                                             </div>
                                         </td>
-                                        <td className="p-4 text-right text-zinc-500 font-medium">{prod.quantity}</td>
-                                        <td className="p-4 text-right font-bold text-emerald-600">${prod.revenue.toFixed(0)}</td>
+                                        <td className="p-5 text-right text-[var(--color-text-muted)] font-black">{prod.quantity}</td>
+                                        <td className="p-5 text-right font-black text-emerald-500 text-lg">${prod.revenue.toLocaleString()}</td>
                                     </tr>
                                 ))}
                                 {topProducts.length === 0 && (
                                     <tr>
-                                        <td colSpan="3" className="text-center py-20 text-zinc-400 italic">No hay datos suficientes</td>
+                                        <td colSpan="3" className="text-center py-24 text-[var(--color-text-muted)] italic">No hay datos suficientes</td>
                                     </tr>
                                 )}
                             </tbody>
@@ -477,41 +483,41 @@ export default function ReportsPage() {
                     </div>
                 </section>
 
-                <section className="card p-0 flex flex-col h-[400px] bg-white border border-zinc-200 shadow-sm rounded-2xl">
-                    <div className="p-6 border-b border-zinc-100 bg-zinc-50 flex justify-between items-center">
+                <section className="card p-0 flex flex-col h-[450px] bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl rounded-2xl overflow-hidden">
+                    <div className="p-6 border-b border-[var(--color-glass-border)] bg-[var(--color-surface-highlight)] flex justify-between items-center">
                         <div className="flex items-center gap-3">
-                            <div className="bg-blue-50 p-2 rounded-xl text-blue-500 border border-blue-100">
+                            <div className="bg-blue-500/10 p-2 rounded-xl text-blue-500 border border-blue-500/20">
                                 <History size={20} />
                             </div>
-                            <h2 className="font-bold text-zinc-900">Ventas Recientes</h2>
+                            <h2 className="font-bold text-[var(--color-text-main)]">Ventas Recientes</h2>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-auto p-4 flex flex-col gap-3">
-                        {sales.slice(0, 8).map((sale) => (
-                            <div key={sale.id} className="p-4 bg-white rounded-2xl border border-zinc-100 flex justify-between items-center hover:border-primary/30 hover:shadow-md transition-all group shadow-sm">
-                                <div className="flex flex-col">
+                    <div className="flex-1 overflow-auto p-5 flex flex-col gap-4 bg-[var(--color-surface)]">
+                        {sales.slice(0, 10).map((sale) => (
+                            <div key={sale.id} className="p-5 bg-[var(--color-surface-highlight)] rounded-2xl border border-[var(--color-glass-border)] flex justify-between items-center hover:bg-[var(--color-surface-hover)] hover:border-primary/40 hover:scale-[1.01] transition-all group shadow-sm">
+                                <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2">
-                                        <span className="font-bold text-lg text-zinc-900">${sale.total.toFixed(0)}</span>
-                                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-50 text-blue-500' : 'bg-emerald-50 text-emerald-600'}`}>
+                                        <span className="font-black text-xl text-[var(--color-text-main)]">${sale.total.toLocaleString()}</span>
+                                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-500/20 text-blue-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
                                             {sale.paymentMethod || 'Efectivo'}
                                         </span>
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-zinc-700 truncate max-w-[120px]">
-                                            {sale.customerName || "Venta Rápida"}
+                                        <span className="text-sm font-bold text-[var(--color-text-main)] opacity-80 truncate max-w-[150px]">
+                                            {sale.customerName || "Venta Directa"}
                                         </span>
-                                        <span className="text-[10px] text-zinc-400 font-bold uppercase tracking-wider">
+                                        <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">
                                             {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="text-right">
-                                        <span className="block text-[8px] text-zinc-400 font-bold uppercase">Ganancia</span>
-                                        <span className="font-bold text-emerald-600 text-sm">+${sale.profit.toFixed(0)}</span>
+                                <div className="flex items-center gap-5">
+                                    <div className="text-right flex flex-col">
+                                        <span className="text-[9px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Ganancia</span>
+                                        <span className="font-black text-emerald-500 text-lg">+${sale.profit.toLocaleString()}</span>
                                     </div>
-                                    <div className="h-10 w-10 rounded-xl bg-zinc-50 flex items-center justify-center text-xs font-bold text-zinc-600 border border-zinc-100">
-                                        {sale.items?.length}
+                                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center text-xs font-black text-[var(--color-text-main)] border border-[var(--color-glass-border)] shadow-sm">
+                                        {sale.items?.length || 0}
                                     </div>
                                 </div>
                             </div>

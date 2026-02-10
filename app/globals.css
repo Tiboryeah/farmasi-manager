@@ -24,48 +24,50 @@
 
 @layer base {
   :root {
-    /* LIGHT THEME (Default) */
+    /* LIGHT THEME (Default) - Sophisticated & Clean */
     --color-primary: #e11d48;
-    --color-primary-soft: rgba(225, 29, 72, 0.1);
-    --color-secondary: #71717a;
+    --color-primary-soft: rgba(225, 29, 72, 0.08);
+    --color-secondary: #64748b;
     --color-danger: #ef4444;
     --color-success: #10b981;
     --color-warning: #f59e0b;
 
-    --color-background: #f4f4f5;
+    --color-background: #f8fafc;
     --color-surface: #ffffff;
-    --color-surface-highlight: #f8fafc;
-    --color-surface-hover: #f1f5f9;
+    --color-surface-highlight: #f1f5f9;
+    --color-surface-hover: #e2e8f0;
 
-    --color-glass: rgba(255, 255, 255, 0.9);
+    --color-glass: rgba(255, 255, 255, 0.85);
     --color-glass-border: rgba(0, 0, 0, 0.05);
 
-    --color-text-main: #18181b;
-    --color-text-muted: #71717a;
+    --color-text-main: #0f172a;
+    --color-text-muted: #64748b;
 
-    --shadow-default: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
-    --shadow-hover: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+    --shadow-default: 0 1px 3px 0 rgba(0, 0, 0, 0.02), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+    --shadow-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
   }
 
   :root.dark {
-    /* DARK THEME */
-    --color-primary: #f43f5e;
-    --color-primary-soft: rgba(244, 63, 94, 0.15);
-    --color-secondary: #a1a1aa;
+    /* DARK THEME - Premium & Deep */
+    --color-primary: #fb7185;
+    --color-primary-soft: rgba(251, 113, 133, 0.12);
+    --color-secondary: #94a3b8;
 
-    --color-background: #09090b;
-    --color-surface: #18181b;
-    --color-surface-highlight: #27272a;
-    --color-surface-hover: #27272a;
+    --color-background: #060608;
+    /* Deep off-black */
+    --color-surface: #101014;
+    /* Subtle elevation */
+    --color-surface-highlight: #18181f;
+    --color-surface-hover: #21212a;
 
-    --color-glass: rgba(24, 24, 27, 0.8);
-    --color-glass-border: rgba(255, 255, 255, 0.1);
+    --color-glass: rgba(16, 16, 20, 0.75);
+    --color-glass-border: rgba(255, 255, 255, 0.06);
 
-    --color-text-main: #ffffff;
-    --color-text-muted: #a1a1aa;
+    --color-text-main: #f8fafc;
+    --color-text-muted: #94a3b8;
 
-    --shadow-default: 0 4px 6px -1px rgba(0, 0, 0, 0.2);
-    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4);
+    --shadow-default: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+    --shadow-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
   }
 }
 

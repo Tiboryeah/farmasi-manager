@@ -84,17 +84,17 @@ export default function Sidebar() {
                 </button>
 
                 <button
-                    className="flex items-center gap-4 w-full p-4 rounded-2xl text-[var(--color-text-muted)] font-bold hover:bg-orange-50 hover:text-orange-600 transition-all duration-300"
+                    className="flex items-center gap-4 w-full p-4 rounded-2xl text-[var(--color-text-muted)] font-bold hover:bg-orange-500/10 hover:text-orange-500 transition-all duration-300 group"
                     onClick={handleReset}
                 >
-                    <Trash2 size={22} />
-                    <span className="tracking-tight">Limpiar Sistema</span>
+                    <Trash2 size={22} className="group-hover:scale-110 transition-transform" />
+                    <span className="tracking-tight italic opacity-80">Reinicio Total</span>
                 </button>
                 <button
-                    className="flex items-center gap-4 w-full p-4 rounded-2xl text-[var(--color-text-muted)] font-bold hover:bg-red-50 hover:text-red-600 transition-all duration-300"
+                    className="flex items-center gap-4 w-full p-4 rounded-2xl text-[var(--color-text-muted)] font-bold hover:bg-red-500/10 hover:text-red-500 transition-all duration-300 group"
                     onClick={async () => await logoutAction()}
                 >
-                    <LogOut size={22} />
+                    <LogOut size={22} className="group-hover:scale-110 transition-transform" />
                     <span className="tracking-tight">Cerrar Sesión</span>
                 </button>
             </div>

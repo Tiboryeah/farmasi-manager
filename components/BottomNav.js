@@ -56,9 +56,9 @@ export default function BottomNav() {
       {/* Botón de salida para móvil */}
       <button
         onClick={async () => await logoutAction()}
-        className="flex flex-col items-center justify-center p-2 rounded-2xl w-full h-[70px] text-[var(--color-text-muted)] hover:text-red-500 transition-colors"
+        className="flex flex-col items-center justify-center p-2 rounded-2xl w-full h-[70px] text-[var(--color-text-muted)] hover:text-red-500 transition-colors group"
       >
-        <div className="p-2 rounded-xl">
+        <div className="p-2 rounded-xl group-hover:bg-red-500/10 transition-all">
           <LogOut size={24} />
         </div>
       </button>
