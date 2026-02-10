@@ -4,8 +4,9 @@ import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Suspense } from "react";
 import { createProduct, getProduct } from "@/app/actions";
-import { ChevronLeft, Save, Copy } from "lucide-react";
+import { ChevronLeft, Save, Copy, Crop, Check, X } from "lucide-react";
 import Link from "next/link";
+import Cropper from 'react-easy-crop';
 
 function NewProductForm() {
     const router = useRouter();
@@ -26,8 +27,12 @@ function NewProductForm() {
 
     const [createTestCopy, setCreateTestCopy] = useState(false);
     const [attributes, setAttributes] = useState([]);
-
     const [preview, setPreview] = useState(null);
+    const [imageToCrop, setImageToCrop] = useState(null);
+    const [crop, setCrop] = useState({ x: 0, y: 0 });
+    const [zoom, setZoom] = useState(1);
+    const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+    const [isCropping, setIsCropping] = useState(false);
 
     const handleAddAttribute = () => {
         setAttributes([...attributes, { name: '', value: '' }]);
@@ -70,42 +75,61 @@ function NewProductForm() {
         const file = e.target.files[0];
         if (!file) return;
 
-        // Preview
         const reader = new FileReader();
-        reader.onloadend = () => {
-            const img = new Image();
-            img.onload = () => {
-                // Compress image using canvas
-                const canvas = document.createElement('canvas');
-                const MAX_WIDTH = 400;
-                const MAX_HEIGHT = 400;
-                let width = img.width;
-                let height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0, width, height);
-
-                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-                setPreview(compressedBase64);
-                setFormData({ ...formData, image: compressedBase64 });
-            };
-            img.src = reader.result;
+        reader.onload = () => {
+            setImageToCrop(reader.result);
+            setIsCropping(true);
         };
         reader.readAsDataURL(file);
+        e.target.value = null; // Reset to allow same file re-selection
+    };
+
+    const onCropComplete = (croppedArea, croppedAreaPixels) => {
+        setCroppedAreaPixels(croppedAreaPixels);
+    };
+
+    const getCroppedImg = async () => {
+        try {
+            const image = new Image();
+            image.src = imageToCrop;
+            await new Promise((resolve) => { image.onload = resolve; });
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            const maxSize = 600;
+            let targetWidth = croppedAreaPixels.width;
+            let targetHeight = croppedAreaPixels.height;
+
+            if (targetWidth > maxSize || targetHeight > maxSize) {
+                const ratio = Math.min(maxSize / targetWidth, maxSize / targetHeight);
+                targetWidth *= ratio;
+                targetHeight *= ratio;
+            }
+
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+
+            ctx.drawImage(
+                image,
+                croppedAreaPixels.x,
+                croppedAreaPixels.y,
+                croppedAreaPixels.width,
+                croppedAreaPixels.height,
+                0,
+                0,
+                targetWidth,
+                targetHeight
+            );
+
+            const base64Image = canvas.toDataURL('image/jpeg', 0.8);
+            setPreview(base64Image);
+            setFormData({ ...formData, image: base64Image });
+            setIsCropping(false);
+            setImageToCrop(null);
+        } catch (e) {
+            console.error(e);
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -256,6 +280,64 @@ function NewProductForm() {
                     <Save size={20} /> Guardar Producto
                 </button>
             </form>
+
+            {/* Cropping Modal */}
+            {isCropping && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="bg-[var(--color-surface)] w-full max-w-lg rounded-3xl overflow-hidden shadow-2xl border border-[var(--color-glass-border)] flex flex-col h-[80vh] md:h-[600px]">
+                        <div className="p-4 border-b border-[var(--color-glass-border)] flex items-center justify-between shrink-0">
+                            <h3 className="font-black uppercase tracking-widest text-[var(--color-text-main)] text-sm flex items-center gap-2">
+                                <Crop size={18} className="text-primary" /> Recortar Imagen
+                            </h3>
+                            <button onClick={() => setIsCropping(false)} className="h-8 w-8 rounded-full bg-[var(--color-surface-highlight)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-white transition-all">
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        <div className="relative flex-1 bg-black">
+                            <Cropper
+                                image={imageToCrop}
+                                crop={crop}
+                                zoom={zoom}
+                                aspect={1 / 1}
+                                onCropChange={setCrop}
+                                onCropComplete={onCropComplete}
+                                onZoomChange={setZoom}
+                            />
+                        </div>
+
+                        <div className="p-6 bg-[var(--color-surface-highlight)] shrink-0">
+                            <div className="mb-6">
+                                <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-3 block">Zoom</label>
+                                <input
+                                    type="range"
+                                    value={zoom}
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    aria-labelledby="Zoom"
+                                    onChange={(e) => setZoom(e.target.value)}
+                                    className="w-full accent-primary h-1.5 bg-[var(--color-glass-border)] rounded-lg appearance-none cursor-pointer"
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setIsCropping(false)}
+                                    className="flex-1 py-3 rounded-2xl bg-[var(--color-surface)] text-[var(--color-text-muted)] font-bold text-sm border border-[var(--color-glass-border)] hover:bg-[var(--color-surface-hover)] transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={getCroppedImg}
+                                    className="flex-1 py-3 rounded-2xl bg-primary text-white font-black text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Check size={18} /> Aplicar Recorte
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

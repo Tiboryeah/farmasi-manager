@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { Search, Plus, AlertCircle, Trash, SearchX, Package, ArrowUpRight, Download, Layers, Grid, Copy } from "lucide-react";
-import { getProducts, deleteProduct } from "@/app/actions";
+import { getProducts, deleteProduct, copyInventoryToSamples } from "@/app/actions";
 import Link from "next/link";
 import * as XLSX from 'xlsx';
 
@@ -69,6 +69,21 @@ export default function InventoryPage() {
         }
     };
 
+    const handleSyncSamples = async () => {
+        if (!confirm("Se buscarán productos en el Inventario General que falten en Muestras y se añadirán con stock 0.\n\n¿Continuar?")) return;
+
+        setLoading(true);
+        const res = await copyInventoryToSamples();
+        if (res.error) {
+            alert(res.error);
+        } else {
+            alert(`Sincronización completada. Se añadieron ${res.count} nuevos artículos.`);
+            const refreshed = await getProducts();
+            setProducts(refreshed);
+        }
+        setLoading(false);
+    };
+
 
 
     if (loading) return (
@@ -85,6 +100,16 @@ export default function InventoryPage() {
                     <p className="text-[var(--color-text-muted)] text-sm font-medium mt-1">Gestiona tus productos y stock en tiempo real</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    {activeTab === 'sample' && (
+                        <button
+                            onClick={handleSyncSamples}
+                            className="h-10 px-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-500 flex items-center gap-2 text-xs font-black uppercase tracking-widest hover:bg-amber-500/20 active:scale-95 transition-all shadow-sm"
+                            title="Importar productos del Inventario General"
+                        >
+                            <Layers size={18} />
+                            <span className="hidden md:inline">Sincronizar Muestras</span>
+                        </button>
+                    )}
                     <button
                         onClick={handleExport}
                         className="h-10 w-10 rounded-xl bg-[var(--color-surface)] border border-[var(--color-glass-border)] flex items-center justify-center text-[var(--color-text-muted)] hover:text-[var(--color-text-main)] hover:bg-[var(--color-surface-hover)] transition-all shadow-sm"

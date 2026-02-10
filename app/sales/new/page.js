@@ -82,7 +82,7 @@ export default function NewSalePage() {
 
     if (step === 1) {
         return (
-            <div className="flex flex-col h-[calc(100vh-80px)] md:h-[100vh] bg-[var(--color-background)]">
+            <div className="flex flex-col min-h-screen bg-[var(--color-background)] animate-fade-in -m-4 md:-m-10">
                 <header className="flex items-center gap-3 py-4 px-4 bg-[var(--color-surface)] border-b border-[var(--color-glass-border)] shrink-0">
                     <Link href="/" className="btn btn-ghost p-1 text-[var(--color-text-main)]"><ChevronLeft /></Link>
                     <div className="flex-1">
@@ -102,13 +102,13 @@ export default function NewSalePage() {
                     </div>
                 </div>
 
-                <div className="flex flex-1 overflow-hidden relative">
+                <div className="flex flex-1 relative min-h-[500px]">
                     {/* Category Sidebar */}
                     <aside className="w-24 md:w-48 bg-[var(--color-surface-highlight)] border-r border-[var(--color-glass-border)] flex flex-col overflow-hidden shrink-0">
                         <div className="p-2 border-b border-[var(--color-glass-border)] text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] text-center bg-[var(--color-surface)]">
                             Categorías
                         </div>
-                        <div className="overflow-y-auto flex flex-col gap-2 p-2 pb-24 scrollbar-hide">
+                        <div className="sticky top-0 overflow-y-auto flex flex-col gap-2 p-2 pb-24 scrollbar-hide">
                             {categories.map(cat => (
                                 <button
                                     key={cat}
@@ -171,7 +171,7 @@ export default function NewSalePage() {
                     </div>
 
                     {cart.length > 0 && (
-                        <div className="absolute bottom-4 left-4 right-4 z-50 animate-fade-in md:left-[calc(50%-250px)] md:right-auto md:w-[500px] mb-20 md:mb-4">
+                        <div className="fixed bottom-4 left-4 right-4 z-50 animate-fade-in lg:left-[calc(280px+1rem)] lg:right-4 mb-20 lg:ml-auto lg:w-[400px]">
                             <button
                                 onClick={() => setStep(2)}
                                 className="bg-[var(--color-text-main)] text-[var(--color-surface)] p-5 rounded-3xl w-full shadow-2xl flex justify-between items-center border border-[var(--color-glass-border)] hover:scale-[1.03] active:scale-95 transition-all"
@@ -193,9 +193,9 @@ export default function NewSalePage() {
 
     if (step === 2) {
         return (
-            <div className="flex flex-col h-full pb-2 fixed inset-0 overflow-hidden bg-[var(--color-background)]">
-                <header className="flex items-center gap-3 py-4 px-4 bg-[var(--color-surface)] border-b border-[var(--color-glass-border)] z-10 shrink-0">
-                    <button onClick={() => setStep(1)} className="btn btn-ghost p-1 text-[var(--color-text-main)]"><ChevronLeft /></button>
+            <div className="flex flex-col min-h-screen bg-[var(--color-background)] animate-fade-in -m-4 md:-m-10">
+                <header className="sticky top-0 flex items-center gap-3 py-4 px-4 bg-[var(--color-surface)] border-b border-[var(--color-glass-border)] z-30 shrink-0">
+                    <button onClick={() => setStep(1)} className="btn btn-ghost p-1 text-[var(--color-text-main)] transition-transform active:scale-95"><ChevronLeft /></button>
                     <h1 className="text-xl font-bold text-[var(--color-text-main)]">Ajustar Precios</h1>
                 </header>
 
@@ -234,7 +234,7 @@ export default function NewSalePage() {
                     <div className="text-[10px] text-[var(--color-text-muted)] font-medium">Puedes ajustar los precios aquí</div>
                 </div>
 
-                <div className="flex flex-col gap-4 overflow-y-auto flex-1 px-4 pb-40">
+                <div className="flex flex-col gap-4 px-4 pb-48">
                     {cart.map(item => (
                         <div key={item.id} className="card p-3 bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-sm rounded-xl">
                             <div className="flex justify-between items-start mb-3">
@@ -245,16 +245,18 @@ export default function NewSalePage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs text-[var(--color-text-muted)] mb-1 block">Cantidad</label>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex items-center gap-4 py-1">
                                         <button
-                                            className="btn btn-outline p-1 rounded-md h-8 w-8 flex items-center justify-center text-[var(--color-text-main)] border-[var(--color-glass-border)]"
+                                            type="button"
+                                            className="h-9 w-9 flex items-center justify-center rounded-xl bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] text-[var(--color-text-main)] hover:bg-[var(--color-surface-hover)] active:scale-90 transition-all shadow-sm"
                                             onClick={() => updateCartItem(item.id, 'qty', Math.max(1, item.qty - 1))}
-                                        ><Minus size={14} /></button>
-                                        <span className="font-bold w-4 text-center text-[var(--color-text-main)]">{item.qty}</span>
+                                        ><Minus size={16} /></button>
+                                        <span className="font-black text-lg w-6 text-center text-[var(--color-text-main)]">{item.qty}</span>
                                         <button
-                                            className="btn btn-outline p-1 rounded-md h-8 w-8 flex items-center justify-center text-[var(--color-text-main)] border-[var(--color-glass-border)]"
+                                            type="button"
+                                            className="h-9 w-9 flex items-center justify-center rounded-xl bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] text-[var(--color-text-main)] hover:bg-[var(--color-surface-hover)] active:scale-90 transition-all shadow-sm"
                                             onClick={() => updateCartItem(item.id, 'qty', item.qty + 1)}
-                                        ><Plus size={14} /></button>
+                                        ><Plus size={16} /></button>
                                     </div>
                                 </div>
 
@@ -278,7 +280,7 @@ export default function NewSalePage() {
                     ))}
                 </div>
 
-                <div className="fixed bottom-0 left-0 right-0 p-4 bg-[var(--color-surface)] border-t border-[var(--color-glass-border)] z-20 md:left-[250px] shadow-2xl">
+                <div className="fixed bottom-0 left-0 right-0 p-4 bg-[var(--color-surface)] border-t border-[var(--color-glass-border)] z-40 lg:left-[280px] shadow-2xl">
                     <div className="max-w-[600px] mx-auto w-full">
                         <div className="flex justify-between items-center mb-2">
                             <span className="text-[var(--color-text-muted)]">Subtotal</span>

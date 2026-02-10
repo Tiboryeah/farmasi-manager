@@ -1,20 +1,39 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, ShoppingCart, Calendar, ArrowUpRight, History } from "lucide-react";
+import { Plus, ShoppingCart, Calendar, ArrowUpRight, History, Trash2, XCircle, User, Package, CreditCard } from "lucide-react";
 import Link from "next/link";
-import { getSales } from "@/app/actions";
+import { getSales, cancelSale } from "@/app/actions";
 
 export default function SalesHistoryPage() {
     const [sales, setSales] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        getSales().then((data) => {
-            setSales(data);
-            setLoading(false);
-        });
+        loadSales();
     }, []);
+
+    const loadSales = async () => {
+        setLoading(true);
+        const data = await getSales();
+        setSales(data);
+        setLoading(false);
+    };
+
+    const handleCancelSale = async (id) => {
+        if (!confirm("⚠️ ¿Deseas ANULAR esta venta?\n\nEl stock se devolverá a los productos y la venta se borrará de los registros.")) return;
+
+        const secondConfirm = confirm("❗ ¿Estás totalmente seguro? Esta acción no se puede deshacer.");
+        if (!secondConfirm) return;
+
+        const res = await cancelSale(id);
+        if (res.error) {
+            alert(res.error);
+        } else {
+            alert("Venta anulada correctamente.");
+            loadSales();
+        }
+    };
 
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
@@ -50,24 +69,43 @@ export default function SalesHistoryPage() {
                                         🛍️
                                     </div>
                                     <div>
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="font-bold text-lg text-[var(--color-text-main)]">Venta #{sale.id.slice(-6)}</h3>
-                                            <span className="px-2 py-0.5 rounded-md bg-[var(--color-surface-highlight)] text-emerald-500 text-[10px] font-black uppercase border border-emerald-100">Completada</span>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            <h3 className="font-black text-lg text-[var(--color-text-main)]">Venta #{sale.id.slice(-6).toUpperCase()}</h3>
+                                            <div className="flex gap-1.5">
+                                                <span className="px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase tracking-wider border border-emerald-500/20">Completada</span>
+                                                <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider border ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-500/10 text-blue-500 border-blue-500/20' : 'bg-amber-500/10 text-amber-500 border-amber-500/20'}`}>
+                                                    {sale.paymentMethod}
+                                                </span>
+                                            </div>
                                         </div>
-                                        <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-2 mt-1">
-                                            <Calendar size={12} />
-                                            {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'long', year: 'numeric' })}
-                                            <span className="opacity-30">•</span>
-                                            {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        <div className="text-[11px] text-[var(--color-text-muted)] flex items-center gap-3 mt-1.5 font-medium">
+                                            <div className="flex items-center gap-1.5">
+                                                <Calendar size={13} className="text-primary" />
+                                                {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })} • {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </div>
+                                            <div className="flex items-center gap-1.5 bg-[var(--color-surface-highlight)] px-2 py-0.5 rounded-md border border-[var(--color-glass-border)] text-[var(--color-text-main)]">
+                                                <User size={13} className="text-primary" />
+                                                {sale.customerName || "Consumidor Final"}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between sm:justify-end gap-6 sm:text-right border-t sm:border-t-0 border-[var(--color-glass-border)] pt-4 sm:pt-0">
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Inversión</span>
-                                        <span className="font-bold text-[var(--color-text-muted)]">$ {(sale.total - sale.profit).toFixed(2)}</span>
+                                <div className="flex-1 w-full bg-[var(--color-background)]/50 rounded-xl p-3 border border-[var(--color-glass-border)]">
+                                    <div className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 flex items-center gap-1.5">
+                                        <Package size={12} /> Artículos
                                     </div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {sale.items?.map((item, idx) => (
+                                            <div key={idx} className="bg-[var(--color-surface-highlight)] px-2.5 py-1 rounded-lg border border-[var(--color-glass-border)] text-[11px] flex items-center gap-2">
+                                                <span className="font-black text-primary">{item.quantity}x</span>
+                                                <span className="text-[var(--color-text-main)] font-medium max-w-[120px] truncate">{item.name}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex items-center justify-between sm:justify-end gap-6 sm:text-right border-t sm:border-t-0 border-[var(--color-glass-border)] pt-4 sm:pt-0">
                                     <div className="flex flex-col">
                                         <span className="text-[10px] text-emerald-500 font-black uppercase tracking-widest">Ganancia</span>
                                         <span className="font-bold text-emerald-500 text-xl">+${sale.profit.toFixed(2)}</span>
@@ -76,6 +114,13 @@ export default function SalesHistoryPage() {
                                         <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Total</span>
                                         <span className="font-black text-2xl text-[var(--color-text-main)]">${sale.total.toFixed(2)}</span>
                                     </div>
+                                    <button
+                                        onClick={() => handleCancelSale(sale.id)}
+                                        className="btn h-12 w-12 rounded-2xl bg-rose-500/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all border border-rose-500/20 group-hover:scale-105"
+                                        title="Anular Venta"
+                                    >
+                                        <XCircle size={24} />
+                                    </button>
                                 </div>
                             </div>
                         </div>

@@ -181,20 +181,33 @@ export async function createProduct(data) {
 
   // If user requested a test copy (only for new products)
   if (data.createTestCopy) {
-    await Product.create({
+    const testName = `[PRUEBA] ${data.name}`;
+    const pureName = data.name;
+
+    // Check if a sample with either name already exists to avoid duplicates
+    const existingSample = await Product.findOne({
       userId: session.userId,
-      name: `[PRUEBA] ${data.name}`,
-      code: data.code ? `${data.code}-TEST` : '',
-      category: data.category || 'General',
-      cost: parseFloat(data.cost),
-      price: parseFloat(data.price), // Maybe 0? Or same price? Usually testers have price 0 or cost only. Let's keep same.
-      stock: 0, // Start with 0 for test copy
-      minStock: 1,
-      image: data.image || '📦',
-      type: 'sample', // Usually testers are samples/expenses
-      attributes: data.attributes || [],
-      isTest: true
+      type: 'sample',
+      $or: [{ name: testName }, { name: pureName }],
+      active: true
     });
+
+    if (!existingSample) {
+      await Product.create({
+        userId: session.userId,
+        name: testName,
+        code: data.code ? `${data.code}-TEST` : '',
+        category: data.category || 'General',
+        cost: parseFloat(data.cost),
+        price: parseFloat(data.price),
+        stock: 0,
+        minStock: 1,
+        image: data.image || '📦',
+        type: 'sample',
+        attributes: data.attributes || [],
+        isTest: true
+      });
+    }
   }
 
   // Initial Inventory Movement
@@ -221,6 +234,56 @@ export async function createProduct(data) {
   revalidatePath('/inventory');
   revalidatePath('/sales/new');
   return product._id.toString();
+}
+
+export async function copyInventoryToSamples() {
+  const session = await getSession();
+  if (!session) return { error: "No autorizado" };
+  try {
+    await connectDB();
+    const userId = session.userId;
+
+    // Get all real products (exclude testers/samples themselves)
+    const products = await Product.find({ userId, type: 'product', active: true });
+
+    // Get existing samples to avoid duplicates
+    const existingSamples = await Product.find({ userId, type: 'sample', active: true });
+    const existingNames = new Set(existingSamples.map(p => p.name));
+
+    const newSamples = [];
+    for (const p of products) {
+      const pureName = p.name;
+      const testName = `[PRUEBA] ${p.name}`;
+
+      // Check if either variation already exists in samples
+      if (!existingNames.has(pureName) && !existingNames.has(testName)) {
+        newSamples.push({
+          userId,
+          name: p.name,
+          code: p.code ? `${p.code}-SAMPLE` : '',
+          category: p.category,
+          cost: p.cost,
+          price: p.price,
+          stock: 0,
+          minStock: 1,
+          image: p.image,
+          type: 'sample',
+          attributes: p.attributes,
+          isTest: true
+        });
+      }
+    }
+
+    if (newSamples.length > 0) {
+      await Product.insertMany(newSamples);
+    }
+
+    revalidatePath('/inventory');
+    return { success: true, count: newSamples.length };
+  } catch (error) {
+    console.error("Error copyInventoryToSamples:", error);
+    return { error: "Error al copiar inventario" };
+  }
 }
 
 export async function updateProductStock(id, newStock, reason) {
@@ -325,7 +388,7 @@ export async function createSale(cart, customerName = 'Consumidor Final', paymen
     totalProfit += profit;
 
     saleItems.push({
-      productId: item.id,
+      product: item.id, // Fixed: use 'product' to match schema and for easier lookup
       name: item.name || 'Unknown',
       quantity: qty,
       unitCost: item.cost,
@@ -339,7 +402,7 @@ export async function createSale(cart, customerName = 'Consumidor Final', paymen
     // Log Movement
     await InventoryMovement.create({
       userId: session.userId,
-      productId: item.id,
+      product: item.id, // Fixed: use 'product' to match schema
       type: 'exit',
       quantity: qty,
       reason: `Venta`,
@@ -361,6 +424,58 @@ export async function createSale(cart, customerName = 'Consumidor Final', paymen
   revalidatePath('/inventory');
   revalidatePath('/reports');
   return serialize(sale);
+}
+
+export async function cancelSale(saleId) {
+  const session = await getSession();
+  if (!session) return { error: "No autorizado" };
+
+  try {
+    await connectDB();
+    const userId = session.userId;
+
+    const sale = await Sale.findOne({ _id: saleId, userId });
+    if (!sale) return { error: "Venta no encontrada" };
+
+    // 1. Revert Stock
+    for (const item of sale.items) {
+      // Use item.product because we fixed the key above
+      const targetId = item.product || item.productId;
+      if (targetId) {
+        await Product.findOneAndUpdate(
+          { _id: targetId, userId },
+          { $inc: { stock: item.quantity } }
+        );
+      }
+    }
+
+    // 2. Delete related inventory movements
+    // We look for movements for the product within the sale timeframe
+    const productIds = sale.items.map(i => i.product || i.productId).filter(Boolean);
+
+    await InventoryMovement.deleteMany({
+      userId,
+      product: { $in: productIds },
+      reason: 'Venta',
+      date: {
+        $gte: new Date(new Date(sale.date).getTime() - 2000), // Slightly wider window
+        $lte: new Date(new Date(sale.date).getTime() + 2000)
+      }
+    });
+
+    // 3. Delete the sale itself
+    await Sale.deleteOne({ _id: saleId, userId });
+
+    revalidatePath('/');
+    revalidatePath('/sales');
+    revalidatePath('/inventory');
+    revalidatePath('/reports');
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error canceling sale:", error);
+    return { error: "Error al cancelar la venta" };
+  }
 }
 
 // --- DASHBOARD ---
