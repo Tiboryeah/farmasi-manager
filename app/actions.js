@@ -143,8 +143,33 @@ export async function getProducts(search = '') {
   if (search) {
     query.name = { $regex: search, $options: 'i' };
   }
-  const products = await Product.find(query).sort({ name: 1 }).lean();
-  return serialize(products.map(p => ({ ...p, id: p._id.toString() })));
+
+  const products = await Product.find(query).sort({ name: 1 });
+
+  // Migration: Ensure all products have at least one batch
+  let needsRevalidate = false;
+  for (const p of products) {
+    if (!p.batches || p.batches.length === 0) {
+      console.log(`Migrating product ${p.name} to have a default batch...`);
+      p.batches = [{
+        label: 'Lote Inicial',
+        cost: p.cost || 0,
+        price: p.price || 0,
+        stock: p.stock || 0
+      }];
+      await p.save();
+      needsRevalidate = true;
+    }
+  }
+
+  if (needsRevalidate) revalidatePath('/inventory');
+
+  const plainProducts = products.map(p => {
+    const obj = p.toObject();
+    return { ...obj, id: obj._id.toString() };
+  });
+
+  return serialize(plainProducts);
 }
 
 export async function getProduct(id) {
@@ -152,10 +177,24 @@ export async function getProduct(id) {
   if (!session) return null;
   await connectDB();
   try {
-    const product = await Product.findOne({ _id: id, userId: session.userId }).lean();
+    const product = await Product.findOne({ _id: id, userId: session.userId });
     if (!product) return null;
-    return serialize({ ...product, id: product._id.toString() });
+
+    // Migration for single product view
+    if (!product.batches || product.batches.length === 0) {
+      product.batches = [{
+        label: 'Lote Inicial',
+        cost: product.cost || 0,
+        price: product.price || 0,
+        stock: product.stock || 0
+      }];
+      await product.save();
+    }
+
+    const obj = product.toObject();
+    return serialize({ ...obj, id: obj._id.toString() });
   } catch (e) {
+    console.error("Error in getProduct:", e);
     return null;
   }
 }
@@ -164,50 +203,61 @@ export async function createProduct(data) {
   const session = await getSession();
   if (!session) return null;
   await connectDB();
-  const product = await Product.create({
+
+  // Format batches to ensure numbers
+  const batches = (data.batches && data.batches.length > 0) ? data.batches.map(b => ({
+    label: b.label || 'Lote Principal',
+    cost: parseFloat(b.cost) || 0,
+    price: parseFloat(b.price) || 0,
+    stock: parseInt(b.stock) || 0
+  })) : [{
+    label: 'Compra Inicial',
+    cost: parseFloat(data.cost) || 0,
+    price: parseFloat(data.price) || 0,
+    stock: parseInt(data.stock) || 0
+  }];
+
+  const aggregatedStock = batches.reduce((sum, b) => sum + (parseInt(b.stock) || 0), 0);
+
+  const product = new Product({
     userId: session.userId,
     name: data.name,
     code: data.code || '',
     category: data.category || 'General',
-    cost: parseFloat(data.cost),
-    price: parseFloat(data.price),
-    stock: parseInt(data.stock),
+    cost: parseFloat(data.cost) || 0,
+    price: parseFloat(data.price) || 0,
+    stock: aggregatedStock,
     minStock: parseInt(data.minStock || 5),
     image: data.image || '📦',
     type: data.type || 'product',
     attributes: data.attributes || [],
+    batches: batches,
     isTest: data.isTest || false
   });
+
+  await product.save();
+  console.log(`Product ${data.name} created with ${batches.length} batches.`);
 
   // If user requested a test copy (only for new products)
   if (data.createTestCopy) {
     const testName = `[PRUEBA] ${data.name}`;
-    const pureName = data.name;
 
-    // Check if a sample with either name already exists to avoid duplicates
-    const existingSample = await Product.findOne({
+    // Create sample copy WITH the same batch structure but 0 stock
+    await Product.create({
       userId: session.userId,
+      name: testName,
+      code: data.code ? `${data.code}-TEST` : '',
+      category: data.category || 'General',
+      cost: parseFloat(data.cost) || 0,
+      price: parseFloat(data.price) || 0,
+      stock: 0,
+      minStock: 1,
+      image: data.image || '📦',
       type: 'sample',
-      $or: [{ name: testName }, { name: pureName }],
-      active: true
+      attributes: data.attributes || [],
+      batches: batches.map(b => ({ ...b, stock: 0 })),
+      isTest: true
     });
-
-    if (!existingSample) {
-      await Product.create({
-        userId: session.userId,
-        name: testName,
-        code: data.code ? `${data.code}-TEST` : '',
-        category: data.category || 'General',
-        cost: parseFloat(data.cost),
-        price: parseFloat(data.price),
-        stock: 0,
-        minStock: 1,
-        image: data.image || '📦',
-        type: 'sample',
-        attributes: data.attributes || [],
-        isTest: true
-      });
-    }
   }
 
   // Initial Inventory Movement
@@ -215,21 +265,10 @@ export async function createProduct(data) {
     userId: session.userId,
     productId: product._id,
     type: 'entry',
-    quantity: parseInt(data.stock),
+    quantity: aggregatedStock,
     reason: 'Inventario Inicial',
     date: new Date()
   });
-
-  // If it's a sample, record the expense
-  if (data.type === 'sample' && data.stock > 0 && data.cost > 0) {
-    await Expense.create({
-      userId: session.userId,
-      category: 'Muestras',
-      amount: data.stock * data.cost,
-      note: `Inventario Inicial: ${data.name}`,
-      date: new Date()
-    });
-  }
 
   revalidatePath('/inventory');
   revalidatePath('/sales/new');
@@ -286,7 +325,7 @@ export async function copyInventoryToSamples() {
   }
 }
 
-export async function updateProductStock(id, newStock, reason) {
+export async function updateProductStock(id, newStock, reason, batchId = null) {
   const session = await getSession();
   if (!session) return;
   await connectDB();
@@ -295,6 +334,36 @@ export async function updateProductStock(id, newStock, reason) {
 
   const diff = newStock - product.stock;
   product.stock = newStock;
+
+  // Handle batch update
+  if (product.batches && product.batches.length > 0) {
+    if (batchId) {
+      // Find specific batch
+      const batch = product.batches.id(batchId);
+      if (batch) {
+        batch.stock += diff;
+      } else {
+        // If batchId not found for some reason, fallback to first
+        product.batches[0].stock += diff;
+      }
+    } else {
+      // Fallback to first batch if no ID provided
+      product.batches[0].stock += diff;
+    }
+
+    // Always sync main cost/price with first batch for legacy
+    product.cost = product.batches[0].cost;
+    product.price = product.batches[0].price;
+  } else {
+    // Legacy support: Create a batch if none exists
+    product.batches = [{
+      label: 'Ajuste Stock',
+      cost: product.cost || 0,
+      price: product.price || 0,
+      stock: newStock
+    }];
+  }
+
   await product.save();
 
   await InventoryMovement.create({
@@ -330,9 +399,24 @@ export async function updateProduct(id, data) {
   product.name = data.name;
   product.code = data.code || '';
   product.category = data.category || 'General';
-  product.cost = parseFloat(data.cost);
-  product.price = parseFloat(data.price);
-  product.stock = parseInt(data.stock);
+  if (data.batches && data.batches.length > 0) {
+    product.batches = data.batches.map(b => ({
+      label: b.label || 'Lote',
+      cost: parseFloat(b.cost) || 0,
+      price: parseFloat(b.price) || 0,
+      stock: parseInt(b.stock) || 0
+    }));
+    product.cost = parseFloat(product.batches[0].cost);
+    product.price = parseFloat(product.batches[0].price);
+  } else {
+    product.cost = parseFloat(data.cost) || 0;
+    product.price = parseFloat(data.price) || 0;
+  }
+
+  // Re-calculate aggregated stock
+  const aggregatedStock = (product.batches || []).reduce((sum, b) => sum + (parseInt(b.stock) || 0), 0);
+  product.stock = aggregatedStock;
+
   product.minStock = parseInt(data.minStock || 5);
   if (data.image) product.image = data.image;
   if (data.type) product.type = data.type;
@@ -378,34 +462,58 @@ export async function createSale(cart, customerName = 'Consumidor Final', paymen
     // Check stock explicitly before update
     const currentProduct = await Product.findOne({ _id: item.id, userId: session.userId });
     if (!currentProduct) throw new Error(`Producto no encontrado: ${item.name}`);
-    if (currentProduct.stock < qty) {
-      throw new Error(`Stock insuficiente para ${currentProduct.name}. Solo quedan ${currentProduct.stock} unidades.`);
+
+    // Find the specific batch if provided
+    let targetBatch = null;
+    if (item.batchId) {
+      targetBatch = currentProduct.batches.find(b => b._id.toString() === item.batchId);
     }
 
-    const profit = (item.price - item.cost) * qty;
+    // If not found or no batchId, fallback to a sensible one
+    if (!targetBatch) {
+      targetBatch = currentProduct.batches.find(b => b.stock >= qty) || currentProduct.batches[0];
+    }
+
+    if (!targetBatch || targetBatch.stock < qty) {
+      throw new Error(`Stock insuficiente para ${currentProduct.name} (Lote: ${targetBatch?.label || 'General'}). Solo quedan ${targetBatch?.stock || 0} unidades.`);
+    }
+
+    const itemCost = targetBatch.cost; // Use cost from the batch
+    const profit = (item.price - itemCost) * qty;
 
     total += item.price * qty;
     totalProfit += profit;
 
     saleItems.push({
-      product: item.id, // Fixed: use 'product' to match schema and for easier lookup
+      product: item.id,
+      batchId: targetBatch?._id,
+      // Priority: 1. Batch label from DB, 2. Batch label passed from frontend, 3. 'General'
+      batchLabel: targetBatch?.label || item.batchLabel || 'General',
       name: item.name || 'Unknown',
       quantity: qty,
-      unitCost: item.cost,
+      unitCost: itemCost,
       unitPrice: item.price,
       profit: profit
     });
 
-    // Update Stock (scoped to user)
-    await Product.findOneAndUpdate({ _id: item.id, userId: session.userId }, { $inc: { stock: -qty } });
+    // Update Stock in the specific batch and aggregated
+    await Product.updateOne(
+      { _id: item.id, userId: session.userId, "batches._id": targetBatch._id },
+      {
+        $inc: {
+          "batches.$.stock": -qty,
+          stock: -qty
+        }
+      }
+    );
 
     // Log Movement
     await InventoryMovement.create({
       userId: session.userId,
-      product: item.id, // Fixed: use 'product' to match schema
+      product: item.id,
       type: 'exit',
       quantity: qty,
-      reason: `Venta`,
+      reason: `Venta - Lote: ${targetBatch.label}`,
       date: new Date()
     });
   }
@@ -437,12 +545,25 @@ export async function cancelSale(saleId) {
     const sale = await Sale.findOne({ _id: saleId, userId });
     if (!sale) return { error: "Venta no encontrada" };
 
-    // 1. Revert Stock
+    // 1. Revert Stock (to specific batches)
     for (const item of sale.items) {
-      // Use item.product because we fixed the key above
       const targetId = item.product || item.productId;
-      if (targetId) {
-        await Product.findOneAndUpdate(
+      if (!targetId) continue;
+
+      if (item.batchId) {
+        // Increment both batch stock and aggregated stock
+        await Product.updateOne(
+          { _id: targetId, userId, "batches._id": item.batchId },
+          {
+            $inc: {
+              "batches.$.stock": item.quantity,
+              stock: item.quantity
+            }
+          }
+        );
+      } else {
+        // Fallback for legacy items without batchId
+        await Product.updateOne(
           { _id: targetId, userId },
           { $inc: { stock: item.quantity } }
         );
@@ -450,16 +571,15 @@ export async function cancelSale(saleId) {
     }
 
     // 2. Delete related inventory movements
-    // We look for movements for the product within the sale timeframe
     const productIds = sale.items.map(i => i.product || i.productId).filter(Boolean);
 
     await InventoryMovement.deleteMany({
       userId,
       product: { $in: productIds },
-      reason: 'Venta',
+      type: 'exit',
       date: {
-        $gte: new Date(new Date(sale.date).getTime() - 2000), // Slightly wider window
-        $lte: new Date(new Date(sale.date).getTime() + 2000)
+        $gte: new Date(new Date(sale.date).getTime() - 5000),
+        $lte: new Date(new Date(sale.date).getTime() + 5000)
       }
     });
 
@@ -557,20 +677,23 @@ export async function getRecentActivity() {
     .limit(5)
     .lean();
 
-  const activity = []
-  for (const sale of sales) {
-    for (const item of sale.items) {
-      activity.push({
-        id: sale._id.toString(),
-        date: sale.date,
-        total: sale.total,
-        quantity: item.quantity,
-        name: item.name || 'Unknown'
-      });
-    }
-  }
+  const activity = sales.map(sale => {
+    // Create a compact summary of items: "1x Labial, 3x Gold..."
+    const itemsSummary = sale.items
+      .map(item => `${item.quantity}x ${item.name}${item.batchLabel ? ` (${item.batchLabel})` : ''}`)
+      .join(', ');
 
-  return serialize(activity.slice(0, 5));
+    return {
+      id: sale._id.toString(),
+      date: sale.date,
+      total: sale.total,
+      customerName: sale.customerName || 'Consumidor Final',
+      itemsSummary: itemsSummary,
+      itemCount: sale.items.length
+    };
+  });
+
+  return serialize(activity);
 }
 
 // --- EXPENSES ---

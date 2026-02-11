@@ -132,9 +132,50 @@ function NewProductForm() {
         }
     };
 
+    const [batches, setBatches] = useState([{
+        label: "Lote Principal",
+        cost: "",
+        price: "",
+        stock: "0"
+    }]);
+
+    const handleAddBatch = () => {
+        setBatches([...batches, { label: `Lote ${batches.length + 1}`, cost: "", price: "", stock: "0" }]);
+    };
+
+    const handleRemoveBatch = (index) => {
+        if (batches.length > 1) {
+            setBatches(batches.filter((_, i) => i !== index));
+        }
+    };
+
+    const handleBatchChange = (index, field, value) => {
+        const newBatches = [...batches];
+        newBatches[index][field] = value;
+        setBatches(newBatches);
+    };
+
+    const totalStock = batches.reduce((sum, b) => sum + (parseInt(b.stock) || 0), 0);
+    const averageCost = batches.length > 0
+        ? (batches.reduce((sum, b) => sum + (parseFloat(b.cost) || 0), 0) / batches.length).toFixed(2)
+        : "0.00";
+    const averagePrice = batches.length > 0
+        ? (batches.reduce((sum, b) => sum + (parseFloat(b.price) || 0), 0) / batches.length).toFixed(2)
+        : "0.00";
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        await createProduct({ ...formData, attributes, createTestCopy });
+        // Use the first batch as the 'default' for legacy support/summary
+        const mainBatch = batches[0];
+        await createProduct({
+            ...formData,
+            cost: mainBatch.cost,
+            price: mainBatch.price,
+            stock: totalStock,
+            batches,
+            attributes,
+            createTestCopy
+        });
         router.push("/inventory");
     };
 
@@ -190,9 +231,6 @@ function NewProductForm() {
                             <span className="text-white text-xs font-bold uppercase">Cambiar Foto</span>
                         </div>
                     </div>
-                    <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest text-center">
-                        Haz clic en el recuadro para subir una foto real del producto
-                    </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
@@ -201,7 +239,7 @@ function NewProductForm() {
                         <input name="name" value={formData.name} required className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="Ej. Rimel Zen..." onChange={handleChange} />
                     </div>
                     <div>
-                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Código (Opcional)</label>
+                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Código (SKU)</label>
                         <input name="code" value={formData.code} className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="Ej. RZ-01" onChange={handleChange} />
                     </div>
                 </div>
@@ -211,22 +249,91 @@ function NewProductForm() {
                     <input name="category" value={formData.category} className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="Ej. Ojos, Rostro, Labios..." onChange={handleChange} />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Costo ($)</label>
-                        <input name="cost" value={formData.cost} type="number" step="0.5" required className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="0.00" onChange={handleChange} />
+                {/* Batches Section */}
+                <div className="flex flex-col gap-3 p-4 bg-[var(--color-surface-highlight)] rounded-2xl border border-[var(--color-glass-border)]">
+                    <div className="flex items-center justify-between mb-1">
+                        <div>
+                            <h3 className="text-sm font-black uppercase tracking-widest text-[var(--color-text-main)]">Gestión de Lotes</h3>
+                            <p className="text-[10px] text-[var(--color-text-muted)] uppercase font-bold">Controla compras con diferentes precios</p>
+                        </div>
+                        <button type="button" onClick={handleAddBatch} className="btn btn-primary btn-xs rounded-lg h-8 px-3">+ Nuevo Lote</button>
                     </div>
-                    <div>
-                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Precio Sugerido ($)</label>
-                        <input name="price" value={formData.price} type="number" step="0.5" required className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="0.00" onChange={handleChange} />
+
+                    <div className="flex flex-col gap-3">
+                        {batches.map((batch, index) => (
+                            <div key={index} className="flex flex-col gap-3 p-3 bg-[var(--color-surface)] border border-[var(--color-glass-border)] rounded-xl relative animate-in fade-in slide-in-from-top-2 duration-300">
+                                {batches.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => handleRemoveBatch(index)}
+                                        className="absolute top-2 right-2 h-6 w-6 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all"
+                                    >✕</button>
+                                )}
+                                <div className="grid grid-cols-1 gap-2">
+                                    <input
+                                        placeholder="Etiqueta del Lote (Ej. Compra Enero - 50% Desc)"
+                                        value={batch.label}
+                                        onChange={(e) => handleBatchChange(index, 'label', e.target.value)}
+                                        className="input h-10 bg-[var(--color-surface-highlight)] border-transparent text-xs font-bold text-[var(--color-text-main)]"
+                                    />
+                                </div>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-[9px] font-black uppercase tracking-tighter text-[var(--color-text-muted)] ml-1">Costo ($)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            value={batch.cost}
+                                            onChange={(e) => handleBatchChange(index, 'cost', e.target.value)}
+                                            className="input h-10 bg-[var(--color-surface-highlight)] border-transparent text-xs text-center font-bold text-[var(--color-text-main)]"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-[9px] font-black uppercase tracking-tighter text-[var(--color-text-muted)] ml-1">Venta ($)</label>
+                                        <input
+                                            type="number"
+                                            step="0.01"
+                                            placeholder="0.00"
+                                            value={batch.price}
+                                            onChange={(e) => handleBatchChange(index, 'price', e.target.value)}
+                                            className="input h-10 bg-[var(--color-surface-highlight)] border-transparent text-xs text-center font-bold text-[var(--color-text-main)]"
+                                        />
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <label className="text-[9px] font-black uppercase tracking-tighter text-[var(--color-text-muted)] ml-1">Stock</label>
+                                        <input
+                                            type="number"
+                                            placeholder="0"
+                                            value={batch.stock}
+                                            onChange={(e) => handleBatchChange(index, 'stock', e.target.value)}
+                                            className="input h-10 bg-[var(--color-surface-highlight)] border-transparent text-xs text-center font-bold text-[var(--color-text-main)]"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="mt-2 grid grid-cols-2 gap-4 px-1 border-t border-[var(--color-glass-border)] pt-3">
+                        <div className="text-center bg-[var(--color-surface)] py-2 rounded-xl border border-[var(--color-glass-border)]/50">
+                            <div className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Stock Total</div>
+                            <div className="text-base font-black text-primary">{totalStock}</div>
+                        </div>
+                        <div className="text-center bg-[var(--color-surface)] py-2 rounded-xl border border-[var(--color-glass-border)]/50">
+                            <div className="text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)]">Rango de Precios</div>
+                            <div className="text-sm font-black text-[var(--color-text-main)]">
+                                {batches.length > 1 ? (
+                                    `$${Math.min(...batches.map(b => parseFloat(b.price) || 0))} - $${Math.max(...batches.map(b => parseFloat(b.price) || 0))}`
+                                ) : (
+                                    `$${batches[0]?.price || 0}`
+                                )}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Stock Inicial</label>
-                        <input name="stock" value={formData.stock} type="number" required className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="0" onChange={handleChange} />
-                    </div>
                     <div>
                         <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Stock Mínimo</label>
                         <input name="minStock" value={formData.minStock} type="number" className="input h-11 bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" defaultValue="5" onChange={handleChange} />

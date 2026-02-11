@@ -276,6 +276,9 @@ function ProductCard({ product, handleDelete }) {
                             {product.code && (
                                 <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest bg-[var(--color-surface-highlight)] px-2 py-1 rounded-md border border-[var(--color-glass-border)] whitespace-nowrap">#{product.code}</span>
                             )}
+                            {product.batches && product.batches.length > 1 && (
+                                <span className="text-[10px] bg-primary/10 text-primary px-2 py-1 rounded-md font-black uppercase tracking-widest border border-primary/20 whitespace-nowrap">Varios Lotes</span>
+                            )}
                         </div>
                         <div className="flex gap-1 shrink-0 -mr-2 -mt-2">
                             <button
@@ -313,16 +316,41 @@ function ProductCard({ product, handleDelete }) {
                         )}
                     </div>
 
-                    <div className="flex items-end justify-between mt-auto">
-                        <div>
-                            <span className="text-xl font-black text-[var(--color-text-main)]">${product.price}</span>
-                            <span className="text-xs text-[var(--color-text-muted)] block font-medium">Precio Público</span>
-                        </div>
+                    <div className="mt-auto pt-2 border-t border-[var(--color-glass-border)]/30">
+                        {product.batches && product.batches.length > 0 ? (
+                            <div className="flex flex-col gap-1.5 mb-2">
+                                <div className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] opacity-60 mb-1 flex justify-between items-center">
+                                    <span>{product.batches.length > 1 ? "Precios por Lote:" : "Lote:"}</span>
+                                    {product.batches.length > 1 && <span className="text-[9px] lowercase opacity-50 font-medium italic">({product.batches.length} lotes)</span>}
+                                </div>
+                                {product.batches.map((batch, idx) => (
+                                    <div key={idx} className="flex justify-between items-center bg-[var(--color-surface-highlight)] px-2.5 py-2 rounded-xl border border-[var(--color-glass-border)]/50 shadow-sm transition-all hover:bg-[var(--color-surface-hover)] hover:border-primary/30">
+                                        <div className="flex flex-col min-w-0 flex-1 mr-2">
+                                            <span className="text-[9px] font-black uppercase tracking-tight text-[var(--color-text-muted)] leading-none truncate">{batch.label || "Sin Etiqueta"}</span>
+                                            <span className="text-sm font-black text-[var(--color-text-main)] mt-0.5">${batch.price}</span>
+                                        </div>
+                                        <div className="text-right shrink-0 bg-emerald-500/10 px-2 py-1 rounded-lg border border-emerald-500/20">
+                                            <span className="text-[10px] font-black text-emerald-500">{batch.stock} <small className="text-[8px] opacity-70">un.</small></span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-3">
+                                {product.stock > 0 && <span className="text-[9px] font-bold text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 w-fit">⚠ Sin información de lotes</span>}
+                                <div className="flex items-end justify-between">
+                                    <div>
+                                        <span className="text-xl font-black text-[var(--color-text-main)]">${product.price}</span>
+                                        <span className="text-xs text-[var(--color-text-muted)] block font-medium">Precio Público</span>
+                                    </div>
 
-                        <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm border transition-all ${isLowStock ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
-                            <div className={`w-1.5 h-1.5 rounded-full ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
-                            {product.stock} Stock
-                        </div>
+                                    <div className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-sm border transition-all ${isLowStock ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'}`}>
+                                        <div className={`w-1.5 h-1.5 rounded-full ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
+                                        {product.stock} Stock
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
@@ -348,22 +376,31 @@ function CompactProductRow({ product, handleDelete }) {
         >
             <div className={`w-1 md:w-1.5 h-8 md:h-10 rounded-full shrink-0 ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
 
-            <div className="flex-1 min-w-0">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 md:gap-2 mb-0.5">
-                    <span className="text-[7.5px] md:text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 w-fit shrink-0">{product.category}</span>
-                    <h3 className="font-bold text-[var(--color-text-main)] truncate text-xs md:text-sm">{product.name}</h3>
-                </div>
-                <div className="text-[9px] md:text-[10px] text-[var(--color-text-muted)] font-medium flex items-center gap-2">
-                    {product.code && <span className="opacity-60">#{product.code}</span>}
-                    {product.attributes && product.attributes.length > 0 && (
-                        <span className="truncate opacity-80 italic hidden xs:inline">• {product.attributes.map(a => a.value).join(', ')}</span>
+            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                <h3 className="font-bold text-[var(--color-text-main)] truncate text-xs md:text-sm mb-1">{product.name}</h3>
+                <div className="flex items-center gap-2 overflow-hidden">
+                    <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-primary bg-primary/10 px-1 py-0.5 rounded border border-primary/20 w-fit shrink-0">{product.category}</span>
+                    {product.batches && product.batches.length > 1 && (
+                        <span className="text-[7px] md:text-[8px] font-black uppercase tracking-widest text-amber-500 bg-amber-500/10 px-1 py-0.5 rounded border border-amber-500/20 w-fit shrink-0">Varios Lotes</span>
                     )}
+                    <div className="text-[9px] md:text-[10px] text-[var(--color-text-muted)] font-medium flex items-center gap-1.5 truncate">
+                        {product.code && <span className="opacity-60 shrink-0">#{product.code}</span>}
+                        {product.attributes && product.attributes.length > 0 && (
+                            <span className="truncate opacity-80 italic hidden xs:inline">• {product.attributes.map(a => a.value).join(', ')}</span>
+                        )}
+                    </div>
                 </div>
             </div>
 
             <div className="flex items-center gap-2 md:gap-4 xl:gap-6 shrink-0">
                 <div className="text-right hidden sm:block min-w-[50px] md:min-w-[60px]">
-                    <div className="text-xs font-black text-[var(--color-text-main)]">${product.price}</div>
+                    <div className="text-xs font-black text-[var(--color-text-main)]">
+                        {product.batches && product.batches.length > 1 ? (
+                            `$${Math.min(...product.batches.map(b => b.price))} - $${Math.max(...product.batches.map(b => b.price))}`
+                        ) : (
+                            `$${product.price}`
+                        )}
+                    </div>
                     <div className="text-[8px] md:text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter opacity-60">Precio</div>
                 </div>
 

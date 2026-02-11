@@ -129,14 +129,17 @@ export default function ReportsPage() {
         return sales.reduce((acc, sale) => {
             if (!sale.items) return acc;
             sale.items.forEach(item => {
-                const existing = acc.find(p => p.name === item.name);
+                const key = `${item.name}-${item.batchLabel || 'General'}`;
+                const existing = acc.find(p => p.key === key);
                 if (existing) {
                     existing.quantity += item.quantity;
                     existing.profit += (item.profit || 0);
                     existing.revenue += (item.unitPrice * item.quantity);
                 } else {
                     acc.push({
+                        key,
                         name: item.name,
+                        batchLabel: item.batchLabel || 'General',
                         quantity: item.quantity,
                         profit: item.profit || 0,
                         revenue: item.unitPrice * item.quantity
@@ -144,7 +147,7 @@ export default function ReportsPage() {
                 }
             });
             return acc;
-        }, []).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
+        }, []).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
     }, [sales]);
 
     const handleDownload = (period = 'history') => {
@@ -169,48 +172,58 @@ export default function ReportsPage() {
 
             const wb = XLSX.utils.book_new();
 
-            // 1. Hoja de Resumen de Ventas
-            const salesHeaders = ["ID", "Fecha", "Cliente", "Total", "Ganancia", "Metodo", "Items"];
-            const salesData = filteredSales.map(s => ({
-                ID: s.id.slice(-6),
-                Fecha: new Date(s.date).toLocaleDateString(),
-                Cliente: s.customerName || 'Consumidor Final',
-                Total: s.total,
-                Ganancia: s.profit,
-                Metodo: s.paymentMethod || 'Efectivo',
-                Items: s.items?.length || 0
-            }));
-            const wsSales = XLSX.utils.json_to_sheet(salesData, { header: salesHeaders });
-            XLSX.utils.book_append_sheet(wb, wsSales, "Resumen Ventas");
+            // --- HOJA 1: REGISTRO MAESTRO (TODO EN UNO) ---
+            // Esta es la hoja que el usuario realmente quiere para control total
+            const masterHeaders = [
+                "ID_Venta", "Fecha", "Hora", "Cliente", "Metodo_Pago",
+                "Producto", "Lote", "Cantidad", "Precio_Unitario", "Costo_Unitario",
+                "Total_Precio", "Total_Costo", "Ganancia_Linea", "Total_Venta", "Ganancia_Venta"
+            ];
+            const masterData = [];
 
-            // 2. Hoja de Detalle de Productos
-            const productHeaders = ["ID_Venta", "Fecha", "Cliente", "Producto", "Cantidad", "Precio_Unit", "Costo_Unit", "Total_Linea", "Ganancia_Linea", "Metodo"];
-            const productDetails = [];
             filteredSales.forEach(sale => {
-                if (sale.items && Array.isArray(sale.items)) {
-                    sale.items.forEach(item => {
-                        productDetails.push({
-                            ID_Venta: sale.id.slice(-6),
-                            Fecha: new Date(sale.date).toLocaleDateString(),
-                            Cliente: sale.customerName || 'Consumidor Final',
-                            Producto: item.name,
-                            Cantidad: item.quantity,
-                            Precio_Unit: item.unitPrice,
-                            Costo_Unit: item.unitCost,
-                            Total_Linea: item.unitPrice * item.quantity,
-                            Ganancia_Linea: (item.unitPrice - item.unitCost) * item.quantity,
-                            Metodo: sale.paymentMethod || 'Efectivo'
-                        });
+                const saleDate = new Date(sale.date);
+                sale.items?.forEach(item => {
+                    masterData.push({
+                        ID_Venta: sale.id.slice(-6).toUpperCase(),
+                        Fecha: saleDate.toLocaleDateString(),
+                        Hora: saleDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                        Cliente: sale.customerName || 'Consumidor Final',
+                        Metodo_Pago: sale.paymentMethod || 'Efectivo',
+                        Producto: item.name,
+                        Lote: item.batchLabel || 'General',
+                        Cantidad: item.quantity,
+                        Precio_Unitario: item.unitPrice,
+                        Costo_Unitario: item.unitCost,
+                        Total_Precio: item.unitPrice * item.quantity,
+                        Total_Costo: item.unitCost * item.quantity,
+                        Ganancia_Linea: (item.unitPrice - item.unitCost) * item.quantity,
+                        Total_Venta: sale.total,
+                        Ganancia_Venta: sale.profit
                     });
-                }
+                });
             });
-            const wsProducts = XLSX.utils.json_to_sheet(productDetails, { header: productHeaders });
-            XLSX.utils.book_append_sheet(wb, wsProducts, "Detalle Productos");
+            const wsMaster = XLSX.utils.json_to_sheet(masterData, { header: masterHeaders });
+            XLSX.utils.book_append_sheet(wb, wsMaster, "REGISTRO MAESTRO");
 
-            // 3. Hoja de Gastos
+            // --- HOJA 2: RESUMEN FINANCIERO POR DIA ---
+            const dailyDataMap = {};
+            filteredSales.forEach(s => {
+                const dayKey = new Date(s.date).toLocaleDateString();
+                if (!dailyDataMap[dayKey]) {
+                    dailyDataMap[dayKey] = { Fecha: dayKey, Ventas: 0, Ganancia: 0, Transacciones: 0 };
+                }
+                dailyDataMap[dayKey].Ventas += s.total;
+                dailyDataMap[dayKey].Ganancia += s.profit;
+                dailyDataMap[dayKey].Transacciones += 1;
+            });
+            const wsDaily = XLSX.utils.json_to_sheet(Object.values(dailyDataMap));
+            XLSX.utils.book_append_sheet(wb, wsDaily, "Resumen Diario");
+
+            // --- HOJA 3: GASTOS ---
             const expenseHeaders = ["ID", "Fecha", "Categoria", "Monto", "Nota"];
             const expensesData = filteredExpenses.map(e => ({
-                ID: e.id.slice(-6),
+                ID: e.id.slice(-6).toUpperCase(),
                 Fecha: new Date(e.date).toLocaleDateString(),
                 Categoria: e.category,
                 Monto: e.amount,
@@ -220,7 +233,7 @@ export default function ReportsPage() {
             XLSX.utils.book_append_sheet(wb, wsExpenses, "Gastos");
 
             const periodLabel = period === 'day' ? 'Hoy' : period === 'week' ? 'Semana' : period === 'month' ? 'Mes' : 'Completo';
-            XLSX.writeFile(wb, `DianiFarmi-Reporte-${periodLabel}-${new Date().toISOString().split('T')[0]}.xlsx`);
+            XLSX.writeFile(wb, `FARMASI-Reporte-${periodLabel}-${new Date().toISOString().split('T')[0]}.xlsx`);
         } catch (e) {
             console.error(e);
             alert("Error al generar reporte: " + e.message);
@@ -545,22 +558,22 @@ export default function ReportsPage() {
             </section>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <section className="card p-0 flex flex-col h-[450px] bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl rounded-2xl overflow-hidden">
+                <section className="card p-0 flex flex-col h-[500px] bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl rounded-2xl overflow-hidden">
                     <div className="p-6 border-b border-[var(--color-glass-border)] bg-[var(--color-surface-highlight)] flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <div className="bg-amber-500/10 p-2 rounded-xl text-amber-500 border border-amber-500/20">
                                 <Package size={20} />
                             </div>
-                            <h2 className="font-bold text-[var(--color-text-main)]">Top Productos</h2>
+                            <h2 className="font-bold text-[var(--color-text-main)]">Productos Más Vendidos</h2>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-auto bg-[var(--color-surface)]">
+                    <div className="flex-1 overflow-auto bg-[var(--color-surface)] custom-scrollbar">
                         <table className="w-full">
-                            <thead>
-                                <tr className="border-b border-[var(--color-glass-border)] text-[10px] text-[var(--color-text-muted)] uppercase font-black tracking-widest">
-                                    <th className="p-5 text-left">Producto</th>
-                                    <th className="p-5 text-right">Ventas</th>
-                                    <th className="p-5 text-right">Total</th>
+                            <thead className="sticky top-0 bg-[var(--color-surface)] z-10">
+                                <tr className="border-b border-[var(--color-glass-border)] text-[10px] text-[var(--color-text-muted)] uppercase font-black tracking-widest bg-[var(--color-surface-highlight)]/50">
+                                    <th className="p-5 text-left">Ranking / Producto</th>
+                                    <th className="p-5 text-center">Cant. Vendida</th>
+                                    <th className="p-5 text-right">Ingreso Total</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -568,14 +581,26 @@ export default function ReportsPage() {
                                     <tr key={i} className="hover:bg-[var(--color-surface-hover)] transition-all border-b border-[var(--color-glass-border)]/50 last:border-0 group">
                                         <td className="p-5">
                                             <div className="flex items-center gap-4">
-                                                <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-[var(--color-surface-highlight)] text-xs font-black flex items-center justify-center text-[var(--color-text-muted)] group-hover:bg-primary group-hover:text-white transition-all">
-                                                    {i + 1}
+                                                <span className="flex-shrink-0 w-8 h-8 rounded-xl bg-[var(--color-surface-highlight)] text-xs font-black flex items-center justify-center text-[var(--color-text-muted)] group-hover:bg-primary group-hover:text-white transition-all shadow-sm">
+                                                    #{i + 1}
                                                 </span>
-                                                <span className="font-bold truncate max-w-[200px] text-[var(--color-text-main)]">{prod.name}</span>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className="font-bold text-sm text-[var(--color-text-main)] truncate max-w-[140px] md:max-w-xs">{prod.name}</span>
+                                                    <span className="text-[9px] font-black uppercase text-[var(--color-text-muted)] group-hover:text-primary transition-colors">
+                                                        Lote: {prod.batchLabel}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </td>
-                                        <td className="p-5 text-right text-[var(--color-text-muted)] font-black">{prod.quantity}</td>
-                                        <td className="p-5 text-right font-black text-emerald-500 text-lg">${prod.revenue.toLocaleString()}</td>
+                                        <td className="p-5 text-center">
+                                            <span className="inline-flex items-center justify-center h-8 px-3 rounded-lg bg-[var(--color-surface-highlight)] text-sm font-black text-[var(--color-text-main)] border border-[var(--color-glass-border)]">
+                                                {prod.quantity}
+                                            </span>
+                                        </td>
+                                        <td className="p-5 text-right">
+                                            <div className="font-black text-emerald-500 text-base">${prod.revenue.toLocaleString()}</div>
+                                            <div className="text-[9px] text-[var(--color-text-muted)] uppercase font-bold">Vendido</div>
+                                        </td>
                                     </tr>
                                 ))}
                                 {topProducts.length === 0 && (
@@ -588,41 +613,63 @@ export default function ReportsPage() {
                     </div>
                 </section>
 
-                <section className="card p-0 flex flex-col h-[450px] bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl rounded-2xl overflow-hidden">
+                <section className="card p-0 flex flex-col h-[500px] bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl rounded-2xl overflow-hidden">
                     <div className="p-6 border-b border-[var(--color-glass-border)] bg-[var(--color-surface-highlight)] flex justify-between items-center">
                         <div className="flex items-center gap-3">
                             <div className="bg-blue-500/10 p-2 rounded-xl text-blue-500 border border-blue-500/20">
                                 <History size={20} />
                             </div>
-                            <h2 className="font-bold text-[var(--color-text-main)]">Ventas Recientes</h2>
+                            <h2 className="font-bold text-[var(--color-text-main)]">Historial de Ventas Detallado</h2>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-auto p-5 flex flex-col gap-4 bg-[var(--color-surface)]">
-                        {sales.slice(0, 10).map((sale) => (
-                            <div key={sale.id} className="p-5 bg-[var(--color-surface-highlight)] rounded-2xl border border-[var(--color-glass-border)] flex justify-between items-center hover:bg-[var(--color-surface-hover)] hover:border-primary/40 hover:scale-[1.01] transition-all group shadow-sm">
-                                <div className="flex flex-col gap-1">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-black text-xl text-[var(--color-text-main)]">${sale.total.toLocaleString()}</span>
-                                        <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-500/20 text-blue-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
-                                            {sale.paymentMethod || 'Efectivo'}
-                                        </span>
-                                    </div>
+                    <div className="flex-1 overflow-auto p-4 flex flex-col gap-4 bg-[var(--color-surface)] custom-scrollbar">
+                        {sales.map((sale) => (
+                            <div key={sale.id} className="p-4 bg-[var(--color-surface-highlight)]/40 rounded-2xl border border-[var(--color-glass-border)] hover:border-primary/40 transition-all group shadow-sm flex flex-col gap-4">
+                                <div className="flex justify-between items-start">
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-[var(--color-text-main)] opacity-80 truncate max-w-[150px]">
-                                            {sale.customerName || "Venta Directa"}
-                                        </span>
-                                        <span className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">
-                                            {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                                        </span>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className="font-black text-2xl text-[var(--color-text-main)]">${sale.total.toLocaleString()}</span>
+                                            <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white shadow-sm'}`}>
+                                                {sale.paymentMethod || 'Efectivo'}
+                                            </span>
+                                        </div>
+                                        <div className="text-sm font-bold text-[var(--color-text-main)]">{sale.customerName || "Venta Directa"}</div>
+                                        <div className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest mt-0.5">
+                                            {new Date(sale.date).toLocaleDateString('es-MX', { day: '2-digit', month: 'short' })} • {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[9px] text-[var(--color-text-muted)] font-black uppercase tracking-widest mb-1">Ganancia Estimada</div>
+                                        <div className="inline-flex h-9 px-4 items-center rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-black text-lg">
+                                            +${sale.profit.toLocaleString()}
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-5">
-                                    <div className="text-right flex flex-col">
-                                        <span className="text-[9px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Ganancia</span>
-                                        <span className="font-black text-emerald-500 text-lg">+${sale.profit.toLocaleString()}</span>
+
+                                <div className="bg-[var(--color-surface)] rounded-2xl border border-[var(--color-glass-border)] overflow-hidden shadow-inner">
+                                    <div className="grid grid-cols-12 gap-2 px-4 py-2 bg-[var(--color-surface-highlight)]/50 text-[9px] font-black uppercase tracking-widest text-[var(--color-text-muted)] border-b border-[var(--color-glass-border)]">
+                                        <div className="col-span-7">Producto / Lote</div>
+                                        <div className="col-span-2 text-center">Cant.</div>
+                                        <div className="col-span-3 text-right">Monto</div>
                                     </div>
-                                    <div className="h-10 w-10 rounded-xl bg-[var(--color-surface)] flex items-center justify-center text-xs font-black text-[var(--color-text-main)] border border-[var(--color-glass-border)] shadow-sm">
-                                        {sale.items?.length || 0}
+                                    <div className="flex flex-col">
+                                        {sale.items?.map((item, idx) => (
+                                            <div key={idx} className="grid grid-cols-12 gap-2 px-4 py-2.5 border-b border-[var(--color-glass-border)]/20 last:border-0 hover:bg-primary/5 transition-colors">
+                                                <div className="col-span-7 flex flex-col min-w-0">
+                                                    <span className="text-[11px] font-bold text-[var(--color-text-main)] truncate">{item.name}</span>
+                                                    <span className="text-[9px] font-black text-primary uppercase tracking-tighter opacity-80">
+                                                        📦 {item.batchLabel || 'General'}
+                                                    </span>
+                                                </div>
+                                                <div className="col-span-2 flex items-center justify-center">
+                                                    <span className="h-6 min-w-[24px] px-1 flex items-center justify-center rounded-md bg-[var(--color-surface-highlight)] text-xs font-black text-[var(--color-text-main)] border border-[var(--color-glass-border)]">{item.quantity}</span>
+                                                </div>
+                                                <div className="col-span-3 flex flex-col items-end justify-center">
+                                                    <span className="text-[11px] font-black text-[var(--color-text-main)]">${(item.unitPrice * item.quantity).toLocaleString()}</span>
+                                                    <span className="text-[8px] text-[var(--color-text-muted)] font-bold">Un: ${item.unitPrice}</span>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </div>

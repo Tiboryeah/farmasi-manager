@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation"; // Correct import for App Router
-import { getProduct, updateProductStock, updateProduct } from "@/app/actions";
-import { ChevronLeft, Save, History, TrendingUp, TrendingDown, Crop, Check, X } from "lucide-react";
+import { getProduct, updateProductStock, updateProduct, deleteProduct } from "@/app/actions";
+import { ChevronLeft, Save, History, TrendingUp, TrendingDown, Crop, Check, X, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { use } from "react";
 import Cropper from 'react-easy-crop';
@@ -25,6 +25,7 @@ export default function ProductDetailPage({ params }) {
     const [preview, setPreview] = useState(null);
     const [adjustment, setAdjustment] = useState(0);
     const [reason, setReason] = useState("Ajuste Manual");
+    const [selectedBatchId, setSelectedBatchId] = useState("");
 
     // Cropping states
     const [imageToCrop, setImageToCrop] = useState(null);
@@ -34,13 +35,24 @@ export default function ProductDetailPage({ params }) {
     const [isCropping, setIsCropping] = useState(false);
 
     useEffect(() => {
-        if (id) getProduct(id).then(p => {
-            setCurrentProduct(p);
-            setCurrentProduct(p);
-            setFormData({ ...p, attributes: p.attributes || [] });
-            setPreview(p.image && p.image.startsWith('data:image') ? p.image : null);
-        });
-    }, [id]);
+        if (id) {
+            getProduct(id).then(p => {
+                if (p) {
+                    setCurrentProduct(p);
+                    setFormData({ ...p, attributes: p.attributes || [] });
+                    setPreview(p.image && p.image.startsWith('data:image') ? p.image : null);
+                    if (p.batches && p.batches.length > 0) {
+                        setSelectedBatchId(p.batches[0]._id || p.batches[0].id);
+                    }
+                } else {
+                    // If product not found (e.g. deleted), go back
+                    router.replace('/inventory');
+                }
+            }).catch(() => {
+                router.replace('/inventory');
+            });
+        }
+    }, [id, router]);
 
     const handleAddAttribute = () => {
         setFormData(prev => ({
@@ -64,19 +76,63 @@ export default function ProductDetailPage({ params }) {
         e.preventDefault();
         if (!adjustment) return;
         const newStock = currentProduct.stock + parseInt(adjustment);
-        await updateProductStock(currentProduct.id, newStock, reason);
-        setCurrentProduct({ ...currentProduct, stock: newStock });
+        await updateProductStock(currentProduct.id, newStock, reason, selectedBatchId);
+
+        // Optimistic update of the local state
+        const updatedProduct = { ...currentProduct, stock: newStock };
+        if (updatedProduct.batches && updatedProduct.batches.length > 0) {
+            const batchIdx = updatedProduct.batches.findIndex(b => (b._id || b.id) === selectedBatchId);
+            if (batchIdx !== -1) {
+                updatedProduct.batches[batchIdx].stock += parseInt(adjustment);
+            } else {
+                updatedProduct.batches[0].stock += parseInt(adjustment);
+            }
+        }
+
+        setCurrentProduct(updatedProduct);
         setAdjustment(0);
         setReason("Ajuste Manual");
         alert("Stock actualizado");
     };
 
+    const handleAddBatch = () => {
+        setFormData(prev => ({
+            ...prev,
+            batches: [...(prev.batches || []), { label: `Lote ${prev.batches?.length + 1 || 1}`, cost: 0, price: 0, stock: 0 }]
+        }));
+    };
+
+    const handleBatchChange = (index, field, value) => {
+        const newBatches = [...(formData.batches || [])];
+        newBatches[index][field] = value;
+        setFormData({ ...formData, batches: newBatches });
+    };
+
+    const handleRemoveBatch = (index) => {
+        if (formData.batches?.length > 1) {
+            const newBatches = formData.batches.filter((_, i) => i !== index);
+            setFormData({ ...formData, batches: newBatches });
+        }
+    };
+
     const handleUpdate = async (e) => {
         e.preventDefault();
-        await updateProduct(currentProduct.id, formData);
-        setCurrentProduct(formData);
+        // Aggregated stock is calculated server-side in updateProduct action, 
+        // but we sync the UI here for immediate feedback
+        const totalStock = (formData.batches || []).reduce((sum, b) => sum + (parseInt(b.stock) || 0), 0);
+        const updatedData = { ...formData, stock: totalStock };
+
+        await updateProduct(currentProduct.id, updatedData);
+        setCurrentProduct(updatedData);
         setIsEditing(false);
-        alert("Producto actualizado");
+        alert("Producto y Lotes actualizados");
+    };
+
+    const handleDelete = async () => {
+        if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+            await deleteProduct(currentProduct.id);
+            router.push('/inventory');
+        }
     };
 
     const handleChange = (e) => {
@@ -211,24 +267,69 @@ export default function ProductDetailPage({ params }) {
                         <input name="category" value={formData.category || ''} className="input bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20 placeholder:text-[var(--color-text-muted)]/50" placeholder="Ej. Rostro, Cuidado, etc." onChange={handleChange} />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Costo ($)</label>
-                            <input name="cost" type="number" step="0.5" value={formData.cost || ''} required className="input bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20" onChange={handleChange} />
+                    {/* Batches Section (Edit mode) */}
+                    <div className="bg-[var(--color-surface-highlight)] p-4 rounded-xl border border-[var(--color-glass-border)]">
+                        <div className="flex items-center justify-between mb-3">
+                            <div>
+                                <label className="text-sm font-black uppercase tracking-widest text-[var(--color-text-main)] block leading-none">Gestión de Lotes</label>
+                                <span className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-tighter">Control de costos y stock</span>
+                            </div>
+                            <button type="button" onClick={handleAddBatch} className="text-[10px] btn btn-xs btn-primary font-black uppercase tracking-widest px-3">+ Nuevo Lote</button>
                         </div>
-                        <div>
-                            <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Precio ($)</label>
-                            <input name="price" type="number" step="0.5" value={formData.price || ''} required className="input bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20" onChange={handleChange} />
+
+                        <div className="flex flex-col gap-3">
+                            {(formData.batches || []).map((batch, index) => (
+                                <div key={index} className="bg-[var(--color-surface)] p-3 rounded-xl border border-[var(--color-glass-border)] relative animate-in fade-in slide-in-from-top-1 duration-300">
+                                    {formData.batches.length > 1 && (
+                                        <button type="button" onClick={() => handleRemoveBatch(index)} className="absolute top-2 right-2 h-6 w-6 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition-all">✕</button>
+                                    )}
+                                    <div className="mb-2">
+                                        <input
+                                            placeholder="Etiqueta del Lote (Ej. Compra Mayo)"
+                                            value={batch.label}
+                                            onChange={(e) => handleBatchChange(index, 'label', e.target.value)}
+                                            className="input h-9 bg-[var(--color-surface-highlight)] border-transparent text-xs font-black text-[var(--color-text-main)]"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[9px] font-black uppercase tracking-tighter text-[var(--color-text-muted)] ml-1">Costo ($)</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={batch.cost}
+                                                onChange={(e) => handleBatchChange(index, 'cost', e.target.value)}
+                                                className="input h-9 bg-[var(--color-surface-highlight)] border-transparent text-xs font-bold text-center"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[9px] font-black uppercase tracking-tighter text-[var(--color-text-muted)] ml-1">Venta ($)</label>
+                                            <input
+                                                type="number"
+                                                step="0.01"
+                                                value={batch.price}
+                                                onChange={(e) => handleBatchChange(index, 'price', e.target.value)}
+                                                className="input h-9 bg-[var(--color-surface-highlight)] border-transparent text-xs font-bold text-center"
+                                            />
+                                        </div>
+                                        <div className="flex flex-col gap-1">
+                                            <label className="text-[9px] font-black uppercase tracking-tighter text-[var(--color-text-muted)] ml-1">Stock</label>
+                                            <input
+                                                type="number"
+                                                value={batch.stock}
+                                                onChange={(e) => handleBatchChange(index, 'stock', e.target.value)}
+                                                className="input h-9 bg-[var(--color-surface-highlight)] border-transparent text-xs font-bold text-center"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4">
                         <div>
-                            <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Stock Actual</label>
-                            <input name="stock" type="number" value={formData.stock || 0} required className="input bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20" onChange={handleChange} />
-                        </div>
-                        <div>
-                            <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Mínimo</label>
+                            <label className="text-sm font-bold text-[var(--color-text-muted)] mb-1.5 block">Stock Mínimo (Alerta)</label>
                             <input name="minStock" type="number" value={formData.minStock || 5} className="input bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-main)] shadow-sm focus:border-primary focus:ring-primary/20" onChange={handleChange} />
                         </div>
                     </div>
@@ -333,9 +434,14 @@ export default function ProductDetailPage({ params }) {
                     <button onClick={() => router.back()} className="btn btn-ghost p-1 hover:bg-[var(--color-surface-hover)] rounded-full text-[var(--color-text-muted)] transition-all"><ChevronLeft /></button>
                     <h1 className="text-xl font-bold truncate max-w-[200px] text-[var(--color-text-main)] tracking-tight">{currentProduct.name}</h1>
                 </div>
-                <button onClick={() => setIsEditing(true)} className="h-10 px-4 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm">
-                    Editar
-                </button>
+                <div className="flex gap-2">
+                    <button onClick={handleDelete} className="h-10 w-10 flex items-center justify-center rounded-xl bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all shadow-sm">
+                        <Trash2 size={18} />
+                    </button>
+                    <button onClick={() => setIsEditing(true)} className="h-10 px-4 rounded-xl bg-primary/10 text-primary border border-primary/20 text-xs font-black uppercase tracking-widest hover:bg-primary hover:text-white transition-all shadow-sm">
+                        Editar
+                    </button>
+                </div>
             </header>
 
             <div className="card p-4 mb-4 flex gap-5 items-center bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl shadow-black/5 rounded-2xl">
@@ -383,6 +489,23 @@ export default function ProductDetailPage({ params }) {
                         </button>
                     </div>
 
+                    {currentProduct.batches && currentProduct.batches.length > 1 && (
+                        <div>
+                            <label className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-2 block ml-1">Seleccionar Lote Destino</label>
+                            <select
+                                value={selectedBatchId}
+                                onChange={(e) => setSelectedBatchId(e.target.value)}
+                                className="select w-full h-12 bg-[var(--color-surface-highlight)] border-[var(--color-glass-border)] text-[var(--color-text-main)] font-bold text-sm rounded-xl focus:border-primary focus:ring-primary/10"
+                            >
+                                {currentProduct.batches.map((batch) => (
+                                    <option key={batch._id || batch.id} value={batch._id || batch.id}>
+                                        {batch.label} - Stock actual: {batch.stock}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     <div className="flex gap-4 items-center bg-[var(--color-surface-highlight)] p-4 rounded-xl border border-[var(--color-glass-border)] group-focus-within:border-primary/30 transition-all">
                         <input
                             type="number"
@@ -408,18 +531,42 @@ export default function ProductDetailPage({ params }) {
             </div>
 
             <div className="card p-6 bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-xl shadow-black/5 rounded-2xl mb-6">
-                <h2 className="text-[10px] font-black mb-4 text-[var(--color-text-muted)] uppercase tracking-[0.2em] border-b border-[var(--color-glass-border)] pb-3">Detalles Financieros</h2>
-                <div className="flex justify-between py-3 border-b border-[var(--color-glass-border)]/50">
-                    <span className="text-[var(--color-text-muted)] font-bold text-xs uppercase tracking-widest">Costo Unitario</span>
-                    <span className="font-black text-[var(--color-text-main)]">${currentProduct.cost}</span>
-                </div>
-                <div className="flex justify-between py-3 border-b border-[var(--color-glass-border)]/50">
-                    <span className="text-[var(--color-text-muted)] font-bold text-xs uppercase tracking-widest">Precio Sugerido</span>
-                    <span className="font-black text-emerald-500">${currentProduct.price}</span>
-                </div>
-                <div className="flex justify-between py-3">
-                    <span className="text-primary font-black text-xs uppercase tracking-widest">Margen Sugerido</span>
-                    <span className="text-emerald-500 font-black">+${(currentProduct.price - currentProduct.cost).toFixed(2)}</span>
+                <h2 className="text-[10px] font-black mb-4 text-[var(--color-text-muted)] uppercase tracking-[0.2em] border-b border-[var(--color-glass-border)] pb-3">Detalles Financieros por Lote</h2>
+                <div className="flex flex-col gap-4">
+                    {(currentProduct.batches || []).map((batch, idx) => (
+                        <div key={idx} className="p-3 bg-[var(--color-surface-highlight)] rounded-xl border border-[var(--color-glass-border)]/50">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-[10px] font-black uppercase text-primary tracking-widest">{batch.label}</span>
+                                <span className="text-[10px] font-bold text-[var(--color-text-muted)]">{batch.stock} unidades</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="flex justify-between">
+                                    <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase">Costo</span>
+                                    <span className="font-bold text-xs">${batch.cost}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-[var(--color-text-muted)] text-[10px] font-bold uppercase">Venta</span>
+                                    <span className="font-bold text-xs text-emerald-500">${batch.price}</span>
+                                </div>
+                            </div>
+                            <div className="mt-2 pt-2 border-t border-[var(--color-glass-border)] flex justify-between items-center">
+                                <span className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase">Margen Unitario</span>
+                                <span className="text-[10px] font-black text-emerald-500">+${(batch.price - batch.cost).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    ))}
+                    {(!currentProduct.batches || currentProduct.batches.length === 0) && (
+                        <>
+                            <div className="flex justify-between py-3 border-b border-[var(--color-glass-border)]/50">
+                                <span className="text-[var(--color-text-muted)] font-bold text-xs uppercase tracking-widest">Costo Unitario</span>
+                                <span className="font-black text-[var(--color-text-main)]">${currentProduct.cost}</span>
+                            </div>
+                            <div className="flex justify-between py-3 border-b border-[var(--color-glass-border)]/50">
+                                <span className="text-[var(--color-text-muted)] font-bold text-xs uppercase tracking-widest">Precio Sugerido</span>
+                                <span className="font-black text-emerald-500">${currentProduct.price}</span>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
 

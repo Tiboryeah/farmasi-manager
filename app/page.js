@@ -161,23 +161,26 @@ export default function Home() {
               <p className="font-medium">No hay ventas recientes hoy</p>
             </div>
           ) : (
-            recent.map((item) => (
-              <div key={item.id + item.name} className="card flex items-center justify-between p-4 group hover:bg-[var(--color-surface-hover)] cursor-pointer transition-colors bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-sm rounded-xl">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-2xl bg-[var(--color-surface-highlight)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform border border-[var(--color-glass-border)]">
-                    🛒
+            recent.map((sale) => (
+              <div key={sale.id} className="card flex items-center justify-between p-4 group hover:bg-[var(--color-surface-hover)] cursor-pointer transition-colors bg-[var(--color-surface)] border border-[var(--color-glass-border)] shadow-sm rounded-xl">
+                <div className="flex items-center gap-4 flex-1 min-w-0">
+                  <div className="h-12 w-12 rounded-2xl bg-[var(--color-surface-highlight)] flex items-center justify-center text-2xl group-hover:scale-110 transition-transform border border-[var(--color-glass-border)] shrink-0">
+                    🛍️
                   </div>
-                  <div>
-                    <div className="font-bold text-base text-[var(--color-text-main)]">{item.quantity}x {item.name}</div>
-                    <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-2">
-                      <span className="px-1.5 py-0.5 bg-[var(--color-surface-highlight)] rounded text-[10px] uppercase font-bold tracking-wider text-[var(--color-secondary)]">Venta</span>
-                      {new Date(item.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-bold text-base text-[var(--color-text-main)] truncate">{sale.customerName}</div>
+                    <div className="text-xs text-[var(--color-text-muted)] truncate mb-1">
+                      {sale.itemsSummary}
+                    </div>
+                    <div className="text-[10px] text-[var(--color-text-muted)] flex items-center gap-2 font-bold uppercase tracking-widest">
+                      <span className="px-1.5 py-0.5 bg-primary/10 rounded text-primary border border-primary/10">Venta</span>
+                      {new Date(sale.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="font-bold text-emerald-500 text-lg">+${item.total.toFixed(2)}</div>
-                  <div className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-widest">Cobrado</div>
+                <div className="text-right ml-4">
+                  <div className="font-bold text-emerald-500 text-lg">+${sale.total.toFixed(2)}</div>
+                  <div className="text-[10px] text-[var(--color-text-muted)] font-black uppercase tracking-widest">Total</div>
                 </div>
               </div>
             ))
