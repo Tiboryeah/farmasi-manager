@@ -744,7 +744,7 @@ export async function restoreBackupAction(backupData) {
       return { error: "Archivo de respaldo inválido o vacío" };
     }
 
-    const { products, sales, expenses } = backupData.data;
+    const { products, sales, expenses, movements } = backupData.data;
 
     // Wipe current data for this user
     await Promise.all([
@@ -761,6 +761,7 @@ export async function restoreBackupAction(backupData) {
     if (products?.length) await Product.insertMany(sanitize(products));
     if (sales?.length) await Sale.insertMany(sanitize(sales));
     if (expenses?.length) await Expense.insertMany(sanitize(expenses));
+    if (movements?.length) await InventoryMovement.insertMany(sanitize(movements));
 
     revalidatePath('/');
     revalidatePath('/inventory');
