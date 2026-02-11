@@ -1,6 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+
+const normalizeText = (text) => {
+    if (!text) return "";
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+};
 import Link from "next/link";
 import { Search, Plus, Minus, Trash2, ArrowRight, DollarSign, ChevronLeft } from "lucide-react";
 import { getProducts, createSale } from "@/app/actions";
@@ -24,7 +32,8 @@ export default function NewSalePage() {
     const categories = ["Todas", ...new Set(products.map(p => p.category).filter(Boolean).sort())];
 
     const filteredProducts = products.filter(p => !p.isTest).filter(p => {
-        const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const normalizedSearch = normalizeText(searchTerm);
+        const matchesSearch = normalizeText(p.name).includes(normalizedSearch);
         const matchesCategory = selectedCategory === "Todas" || p.category === selectedCategory;
         return matchesSearch && matchesCategory;
     });

@@ -16,6 +16,14 @@ export default function InventoryPage() {
     );
 }
 
+const normalizeText = (text) => {
+    if (!text) return "";
+    return text
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+};
+
 function InventoryContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -51,8 +59,9 @@ function InventoryContent() {
     }, []);
 
     useEffect(() => {
+        const normalizedSearch = normalizeText(searchTerm);
         const filtered = products.filter(p => {
-            const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchesSearch = normalizeText(p.name).includes(normalizedSearch);
             const type = p.type || 'product';
             const matchesTab = type === activeTab;
             const matchesCategory = selectedCategory === "Todas" || p.category === selectedCategory;

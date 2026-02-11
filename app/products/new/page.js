@@ -19,7 +19,7 @@ function NewProductForm() {
         category: "",
         cost: "",
         price: "",
-        stock: "",
+        stock: "0",
         minStock: "5",
         image: null,
         type: defaultType
@@ -49,7 +49,7 @@ function NewProductForm() {
                         category: data.category,
                         cost: data.cost,
                         price: data.price,
-                        stock: '', // Reset stock for new variant
+                        stock: '0', // Reset stock for new variant
                         minStock: data.minStock,
                         image: data.image,
                         type: data.type
