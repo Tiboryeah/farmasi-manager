@@ -28,28 +28,45 @@ function InventoryContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Initialize state from URL params
-    const initialTab = searchParams.get('tab') || 'product';
-    const initialCategory = searchParams.get('cat') || 'Todas';
-    const initialViewMode = searchParams.get('view') || 'grid';
+    // Determine state directly from URL
+    const activeTab = searchParams.get('tab') || 'product';
+    const selectedCategory = searchParams.get('cat') || 'Todas';
+    const viewMode = searchParams.get('view') || 'grid';
+    const urlSearchTerm = searchParams.get('q') || '';
 
-    const [activeTab, setActiveTab] = useState(initialTab);
-    const [selectedCategory, setSelectedCategory] = useState(initialCategory);
-    const [viewMode, setViewMode] = useState(initialViewMode); // 'grid' | 'compact'
     const [products, setProducts] = useState([]);
-    const [searchTerm, setSearchTerm] = useState("");
+    const [searchTerm, setSearchTerm] = useState(urlSearchTerm);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    // Sync state to URL
-    useEffect(() => {
+    // Update URL params helper
+    const updateParams = (updates) => {
         const params = new URLSearchParams(searchParams.toString());
-        params.set('tab', activeTab);
-        params.set('cat', selectedCategory);
-        params.set('view', viewMode);
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value === null || value === undefined) {
+                params.delete(key);
+            } else {
+                params.set(key, value);
+            }
+        });
         router.replace(`/inventory?${params.toString()}`, { scroll: false });
-    }, [activeTab, selectedCategory, viewMode]);
+    };
 
+    const setActiveTab = (tab) => updateParams({ tab, cat: 'Todas' });
+    const setSelectedCategory = (cat) => updateParams({ cat });
+    const setViewMode = (mode) => updateParams({ view: mode });
+
+    // Sync local search term with URL (debounced would be better, but let's keep it simple first)
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (searchTerm !== urlSearchTerm) {
+                updateParams({ q: searchTerm || null });
+            }
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
+
+    // Initialize products
     useEffect(() => {
         getProducts().then((data) => {
             setProducts(data);
@@ -58,6 +75,7 @@ function InventoryContent() {
         });
     }, []);
 
+    // Effect for filtering
     useEffect(() => {
         const normalizedSearch = normalizeText(searchTerm);
         const filtered = products.filter(p => {
@@ -76,7 +94,7 @@ function InventoryContent() {
         e.preventDefault();
         if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
             await deleteProduct(id);
-            setProducts(products.filter(p => p.id !== id));
+            setProducts(prev => prev.filter(p => p.id !== id));
         }
     };
 
