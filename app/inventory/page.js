@@ -344,51 +344,49 @@ function CompactProductRow({ product, handleDelete }) {
     return (
         <div
             onClick={() => router.push(`/inventory/${product.id}`)}
-            className="flex items-center gap-4 bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)] border border-[var(--color-glass-border)] p-3 px-4 transition-all duration-200 rounded-xl cursor-pointer group"
+            className="flex items-center gap-2 md:gap-4 bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)] border border-[var(--color-glass-border)] p-2 md:p-3 px-3 md:px-4 transition-all duration-200 rounded-xl cursor-pointer group"
         >
-            <div className={`w-2 h-8 rounded-full shrink-0 ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
+            <div className={`w-1 md:w-1.5 h-8 md:h-10 rounded-full shrink-0 ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
 
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                    <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">{product.category}</span>
-                    <h3 className="font-bold text-[var(--color-text-main)] truncate text-sm">{product.name}</h3>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 md:gap-2 mb-0.5">
+                    <span className="text-[7.5px] md:text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20 w-fit shrink-0">{product.category}</span>
+                    <h3 className="font-bold text-[var(--color-text-main)] truncate text-xs md:text-sm">{product.name}</h3>
                 </div>
-                <div className="text-[10px] text-[var(--color-text-muted)] font-medium flex items-center gap-2">
+                <div className="text-[9px] md:text-[10px] text-[var(--color-text-muted)] font-medium flex items-center gap-2">
                     {product.code && <span className="opacity-60">#{product.code}</span>}
                     {product.attributes && product.attributes.length > 0 && (
-                        <span className="truncate opacity-80 italic">• {product.attributes.map(a => a.value).join(', ')}</span>
+                        <span className="truncate opacity-80 italic hidden xs:inline">• {product.attributes.map(a => a.value).join(', ')}</span>
                     )}
                 </div>
             </div>
 
-            <div className="flex items-center gap-6 shrink-0">
-                <div className="text-right hidden sm:block">
+            <div className="flex items-center gap-2 md:gap-4 xl:gap-6 shrink-0">
+                <div className="text-right hidden sm:block min-w-[50px] md:min-w-[60px]">
                     <div className="text-xs font-black text-[var(--color-text-main)]">${product.price}</div>
-                    <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter opacity-60">Precio</div>
+                    <div className="text-[8px] md:text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter opacity-60">Precio</div>
                 </div>
 
-                <div className="text-center min-w-[60px]">
-                    <div className={`text-sm font-black ${isLowStock ? 'text-red-500' : 'text-emerald-500'}`}>{product.stock}</div>
-                    <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter opacity-60">Stock</div>
+                <div className="text-center min-w-[40px] md:min-w-[60px]">
+                    <div className={`text-xs md:text-sm font-black ${isLowStock ? 'text-red-500' : 'text-emerald-500'}`}>{product.stock}</div>
+                    <div className="text-[8px] md:text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter opacity-60">Stock</div>
                 </div>
 
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-1 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity">
                     <button
                         onClick={(e) => {
                             e.stopPropagation();
                             router.push(`/products/new?cloneId=${product.id}`);
                         }}
-                        className="p-1.5 bg-[var(--color-surface)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-primary rounded-lg transition-all"
-                        title="Copiar"
+                        className="p-1.5 bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-primary rounded-lg transition-all active:scale-90"
                     >
-                        <Copy size={14} />
+                        <Copy className="md:size-[14px] size-3" />
                     </button>
                     <button
                         onClick={(e) => handleDelete(e, product.id)}
-                        className="p-1.5 bg-[var(--color-surface)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-danger rounded-lg transition-all"
-                        title="Eliminar"
+                        className="p-1.5 bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-danger rounded-lg transition-all active:scale-90"
                     >
-                        <Trash size={14} />
+                        <Trash className="md:size-[14px] size-3" />
                     </button>
                 </div>
             </div>
