@@ -28,73 +28,84 @@ function InventoryContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
 
-    // Determine state directly from URL
+    // SOURCE OF TRUTH: Read all filters directly from the URL
     const activeTab = searchParams.get('tab') || 'product';
     const selectedCategory = searchParams.get('cat') || 'Todas';
     const viewMode = searchParams.get('view') || 'grid';
     const urlSearchTerm = searchParams.get('q') || '';
 
     const [products, setProducts] = useState([]);
-    const [searchTerm, setSearchTerm] = useState(urlSearchTerm);
-    const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    // Search is local for immediate typing response, but synced to URL
+    const [searchTerm, setSearchTerm] = useState(urlSearchTerm);
 
-    // Update URL params helper
-    const updateParams = (updates) => {
+    // Navigation Helpers
+    const updateURL = (newParams) => {
         const params = new URLSearchParams(searchParams.toString());
-        Object.entries(updates).forEach(([key, value]) => {
-            if (value === null || value === undefined) {
-                params.delete(key);
-            } else {
-                params.set(key, value);
-            }
+        Object.entries(newParams).forEach(([key, value]) => {
+            if (value && value !== 'Todas') params.set(key, value);
+            else params.delete(key);
         });
         router.replace(`/inventory?${params.toString()}`, { scroll: false });
     };
 
-    const setActiveTab = (tab) => updateParams({ tab, cat: 'Todas' });
-    const setSelectedCategory = (cat) => updateParams({ cat });
-    const setViewMode = (mode) => updateParams({ view: mode });
+    const handleTabChange = (tab) => updateURL({ tab, cat: 'Todas' });
+    const handleCategoryChange = (cat) => updateURL({ cat });
+    const handleViewChange = (view) => updateURL({ view });
 
-    // Sync local search term with URL (debounced would be better, but let's keep it simple first)
+    // Sync Search to URL with debounce
     useEffect(() => {
-        const timeoutId = setTimeout(() => {
+        const timer = setTimeout(() => {
             if (searchTerm !== urlSearchTerm) {
-                updateParams({ q: searchTerm || null });
+                updateURL({ q: searchTerm || null });
             }
-        }, 300);
-        return () => clearTimeout(timeoutId);
+        }, 400);
+        return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    // Initialize products
+    // Initial load
     useEffect(() => {
         getProducts().then((data) => {
             setProducts(data);
-            setFilteredProducts(data);
             setLoading(false);
         });
     }, []);
 
-    // Effect for filtering
-    useEffect(() => {
+    // Derived States
+    const filteredProducts = useMemo(() => {
         const normalizedSearch = normalizeText(searchTerm);
-        const filtered = products.filter(p => {
+        return products.filter(p => {
             const matchesSearch = normalizeText(p.name).includes(normalizedSearch);
-            const type = p.type || 'product';
-            const matchesTab = type === activeTab;
+            const matchesTab = (p.type || 'product') === activeTab;
             const matchesCategory = selectedCategory === "Todas" || p.category === selectedCategory;
             return matchesSearch && matchesTab && matchesCategory;
         });
-        setFilteredProducts(filtered);
-    }, [searchTerm, products, activeTab, selectedCategory]);
+    }, [products, searchTerm, activeTab, selectedCategory]);
 
-    const categories = ["Todas", ...new Set(products.filter(p => (p.type || 'product') === activeTab).map(p => p.category).filter(Boolean).sort())];
+    const categories = useMemo(() => {
+        return ["Todas", ...new Set(products
+            .filter(p => (p.type || 'product') === activeTab)
+            .map(p => p.category)
+            .filter(Boolean)
+            .sort())];
+    }, [products, activeTab]);
 
     const handleDelete = async (e, id) => {
         e.preventDefault();
+        e.stopPropagation();
         if (confirm("¿Estás seguro de que deseas eliminar este producto?")) {
-            await deleteProduct(id);
+            // OPTIMISTIC UPDATE: Immediate disappearance from UI
             setProducts(prev => prev.filter(p => p.id !== id));
+            try {
+                const res = await deleteProduct(id);
+                if (res.error) {
+                    alert(res.error);
+                    getProducts().then(setProducts); // Reset list on failure
+                }
+            } catch (err) {
+                alert("Error al eliminar el producto");
+                getProducts().then(setProducts);
+            }
         }
     };
 
@@ -157,14 +168,14 @@ function InventoryContent() {
                 <div className="flex items-center gap-3">
                     <div className="flex bg-[var(--color-surface)] border border-[var(--color-glass-border)] p-1 rounded-xl mr-2">
                         <button
-                            onClick={() => setViewMode('grid')}
+                            onClick={() => handleViewChange('grid')}
                             className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary text-white shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
                             title="Vista Cuadrícula"
                         >
                             <Grid size={18} />
                         </button>
                         <button
-                            onClick={() => setViewMode('compact')}
+                            onClick={() => handleViewChange('compact')}
                             className={`p-1.5 rounded-lg transition-all ${viewMode === 'compact' ? 'bg-primary text-white shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
                             title="Vista Compacta"
                         >
@@ -196,13 +207,13 @@ function InventoryContent() {
 
             <div className="flex gap-4 border-b border-zinc-200 pb-4">
                 <button
-                    onClick={() => setActiveTab('product')}
+                    onClick={() => handleTabChange('product')}
                     className={`text-lg font-bold pb-2 transition-all ${activeTab === 'product' ? 'text-primary border-b-2 border-primary' : 'text-zinc-400 hover:text-zinc-600'}`}
                 >
                     Inventario General
                 </button>
                 <button
-                    onClick={() => setActiveTab('sample')}
+                    onClick={() => handleTabChange('sample')}
                     className={`text-lg font-bold pb-2 transition-all ${activeTab === 'sample' ? 'text-primary border-b-2 border-primary' : 'text-zinc-400 hover:text-zinc-600'}`}
                 >
                     Inventario de Muestras
@@ -231,7 +242,7 @@ function InventoryContent() {
                         {categories.map(cat => (
                             <button
                                 key={cat}
-                                onClick={() => setSelectedCategory(cat)}
+                                onClick={() => handleCategoryChange(cat)}
                                 className={`flex items-center justify-center lg:justify-start px-4 py-3 rounded-xl text-xs font-bold transition-all whitespace-nowrap border ${selectedCategory === cat
                                     ? 'bg-primary text-white border-primary shadow-lg shadow-primary/30'
                                     : 'bg-[var(--color-surface)] text-[var(--color-text-muted)] border-transparent hover:bg-[var(--color-surface-hover)]'
@@ -310,7 +321,10 @@ function ProductCard({ product, handleDelete }) {
                                 <Copy size={14} />
                             </button>
                             <button
-                                onClick={(e) => handleDelete(e, product.id)}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDelete(e, product.id);
+                                }}
                                 className="p-2 bg-[var(--color-surface)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-danger hover:bg-danger/10 hover:border-danger rounded-full transition-all shadow-sm"
                                 title="Eliminar"
                             >
@@ -438,7 +452,10 @@ function CompactProductRow({ product, handleDelete }) {
                         <Copy className="md:size-[14px] size-3" />
                     </button>
                     <button
-                        onClick={(e) => handleDelete(e, product.id)}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(e, product.id);
+                        }}
                         className="p-1.5 bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-danger rounded-lg transition-all active:scale-90"
                     >
                         <Trash className="md:size-[14px] size-3" />
