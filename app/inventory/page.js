@@ -1,19 +1,46 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, AlertCircle, Trash, SearchX, Package, ArrowUpRight, Download, Layers, Grid, Copy } from "lucide-react";
+import { Search, Plus, AlertCircle, Trash, SearchX, Package, ArrowUpRight, Download, Layers, Grid, Copy, LayoutList } from "lucide-react";
 import { getProducts, deleteProduct, copyInventoryToSamples } from "@/app/actions";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import * as XLSX from 'xlsx';
 
 export default function InventoryPage() {
-    const [activeTab, setActiveTab] = useState('product'); // 'product' | 'sample'
-    const [selectedCategory, setSelectedCategory] = useState("Todas");
+    return (
+        <Suspense fallback={<div className="p-4">Cargando...</div>}>
+            <InventoryContent />
+        </Suspense>
+    );
+}
+
+function InventoryContent() {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Initialize state from URL params
+    const initialTab = searchParams.get('tab') || 'product';
+    const initialCategory = searchParams.get('cat') || 'Todas';
+    const initialViewMode = searchParams.get('view') || 'grid';
+
+    const [activeTab, setActiveTab] = useState(initialTab);
+    const [selectedCategory, setSelectedCategory] = useState(initialCategory);
+    const [viewMode, setViewMode] = useState(initialViewMode); // 'grid' | 'compact'
     const [products, setProducts] = useState([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+
+    // Sync state to URL
+    useEffect(() => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set('tab', activeTab);
+        params.set('cat', selectedCategory);
+        params.set('view', viewMode);
+        router.replace(`/inventory?${params.toString()}`, { scroll: false });
+    }, [activeTab, selectedCategory, viewMode]);
 
     useEffect(() => {
         getProducts().then((data) => {
@@ -101,6 +128,22 @@ export default function InventoryPage() {
                     <p className="text-[var(--color-text-muted)] text-sm font-medium mt-1">Gestiona tus productos y stock en tiempo real</p>
                 </div>
                 <div className="flex items-center gap-3">
+                    <div className="flex bg-[var(--color-surface)] border border-[var(--color-glass-border)] p-1 rounded-xl mr-2">
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-primary text-white shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
+                            title="Vista Cuadrícula"
+                        >
+                            <Grid size={18} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('compact')}
+                            className={`p-1.5 rounded-lg transition-all ${viewMode === 'compact' ? 'bg-primary text-white shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
+                            title="Vista Compacta"
+                        >
+                            <LayoutList size={18} />
+                        </button>
+                    </div>
                     {activeTab === 'sample' && (
                         <button
                             onClick={handleSyncSamples}
@@ -182,15 +225,20 @@ export default function InventoryPage() {
                             <button onClick={() => setSearchTerm("")} className="text-primary mt-4 text-sm font-black uppercase tracking-widest hover:underline">Limpiar búsqueda</button>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+                        <div className={viewMode === 'grid'
+                            ? "grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4"
+                            : "flex flex-col gap-2"
+                        }>
                             {filteredProducts.map(product => (
-                                <ProductCard key={product.id} product={product} handleDelete={handleDelete} />
+                                viewMode === 'grid'
+                                    ? <ProductCard key={product.id} product={product} handleDelete={handleDelete} />
+                                    : <CompactProductRow key={product.id} product={product} handleDelete={handleDelete} />
                             ))}
                         </div>
                     )}
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
 
@@ -275,6 +323,65 @@ function ProductCard({ product, handleDelete }) {
                     className={`h-full transition-all duration-1000 ${isLowStock ? 'bg-red-500' : 'bg-emerald-500'}`}
                     style={{ width: `${Math.min(100, (product.stock / (product.minStock * 2)) * 100)}%` }}
                 />
+            </div>
+        </div>
+    );
+}
+
+function CompactProductRow({ product, handleDelete }) {
+    const router = useRouter();
+    const isLowStock = product.stock <= product.minStock;
+
+    return (
+        <div
+            onClick={() => router.push(`/inventory/${product.id}`)}
+            className="flex items-center gap-4 bg-[var(--color-surface)] hover:bg-[var(--color-surface-hover)] border border-[var(--color-glass-border)] p-3 px-4 transition-all duration-200 rounded-xl cursor-pointer group"
+        >
+            <div className={`w-2 h-8 rounded-full shrink-0 ${isLowStock ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
+
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[9px] font-black uppercase tracking-widest text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">{product.category}</span>
+                    <h3 className="font-bold text-[var(--color-text-main)] truncate text-sm">{product.name}</h3>
+                </div>
+                <div className="text-[10px] text-[var(--color-text-muted)] font-medium flex items-center gap-2">
+                    {product.code && <span className="opacity-60">#{product.code}</span>}
+                    {product.attributes && product.attributes.length > 0 && (
+                        <span className="truncate opacity-80 italic">• {product.attributes.map(a => a.value).join(', ')}</span>
+                    )}
+                </div>
+            </div>
+
+            <div className="flex items-center gap-6 shrink-0">
+                <div className="text-right hidden sm:block">
+                    <div className="text-xs font-black text-[var(--color-text-main)]">${product.price}</div>
+                    <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter opacity-60">Precio</div>
+                </div>
+
+                <div className="text-center min-w-[60px]">
+                    <div className={`text-sm font-black ${isLowStock ? 'text-red-500' : 'text-emerald-500'}`}>{product.stock}</div>
+                    <div className="text-[9px] font-bold text-[var(--color-text-muted)] uppercase tracking-tighter opacity-60">Stock</div>
+                </div>
+
+                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(`/products/new?cloneId=${product.id}`);
+                        }}
+                        className="p-1.5 bg-[var(--color-surface)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-primary rounded-lg transition-all"
+                        title="Copiar"
+                    >
+                        <Copy size={14} />
+                    </button>
+                    <button
+                        onClick={(e) => handleDelete(e, product.id)}
+                        className="p-1.5 bg-[var(--color-surface)] border border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:text-danger rounded-lg transition-all"
+                        title="Eliminar"
+                    >
+                        <Trash size={14} />
+                    </button>
+                </div>
             </div>
         </div>
     );
