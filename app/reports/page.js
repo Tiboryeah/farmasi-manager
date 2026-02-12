@@ -354,6 +354,13 @@ export default function ReportsPage() {
         }
     };
 
+    const formatCurrency = (val) => {
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(val || 0);
+    };
+
     if (loading) return (
         <div className="flex items-center justify-center min-h-[60vh]">
             <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full"></div>
@@ -371,15 +378,15 @@ export default function ReportsPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[var(--color-surface)] p-2 rounded-2xl border border-[var(--color-glass-border)] shadow-xl shadow-black/5">
                     <div className="px-4 py-2 border-r border-[var(--color-glass-border)] last:border-0">
                         <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Costo Inv. Total</p>
-                        <p className="text-lg font-black text-[var(--color-text-main)]">${(inventoryMetrics.totalCost || 0).toLocaleString()}</p>
+                        <p className="text-lg font-black text-[var(--color-text-main)]">${formatCurrency(inventoryMetrics.totalCost)}</p>
                     </div>
                     <div className="px-4 py-2 border-r border-[var(--color-glass-border)] last:border-0">
                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-1">Valor Inv. Total</p>
-                        <p className="text-lg font-black text-emerald-500">${(inventoryMetrics.totalValue || 0).toLocaleString()}</p>
+                        <p className="text-lg font-black text-emerald-500">${formatCurrency(inventoryMetrics.totalValue)}</p>
                     </div>
                     <div className="px-4 py-2 border-r border-[var(--color-glass-border)] last:border-0 text-center">
                         <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Ganancia Potencial</p>
-                        <p className="text-lg font-black text-primary">${(inventoryMetrics.potentialProfit || 0).toLocaleString()}</p>
+                        <p className="text-lg font-black text-primary">${formatCurrency(inventoryMetrics.potentialProfit)}</p>
                     </div>
                 </div>
 
@@ -485,7 +492,7 @@ export default function ReportsPage() {
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value text-2xl font-black text-[var(--color-text-main)]">${kpis.totalRevenue.toLocaleString()}</div>
+                        <div className="stat-value text-2xl font-black text-[var(--color-text-main)]">${formatCurrency(kpis.totalRevenue)}</div>
                         <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase mt-1">
                             {timeFrame === 'year' ? 'En el año actual' : `Últimos ${timeFrame === 'week' ? '7' : '30'} días`}
                         </p>
@@ -500,9 +507,9 @@ export default function ReportsPage() {
                         </div>
                     </div>
                     <div>
-                        <div className="stat-value text-2xl font-black text-emerald-500">${kpis.totalProfit.toLocaleString()}</div>
+                        <div className="stat-value text-2xl font-black text-emerald-500">${formatCurrency(kpis.totalProfit)}</div>
                         <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase mt-1">
-                            Bruta: ${kpis.grossProfit.toLocaleString()} | Gastos: -${kpis.totalExpenses.toLocaleString()}
+                            Bruta: ${formatCurrency(kpis.grossProfit)} | Gastos: -${formatCurrency(kpis.totalExpenses)}
                         </p>
                     </div>
                 </div>
@@ -630,7 +637,7 @@ export default function ReportsPage() {
                                             </span>
                                         </td>
                                         <td className="p-5 text-right">
-                                            <div className="font-black text-emerald-500 text-base">${prod.revenue.toLocaleString()}</div>
+                                            <div className="font-black text-emerald-500 text-base">${formatCurrency(prod.revenue)}</div>
                                             <div className="text-[9px] text-[var(--color-text-muted)] uppercase font-bold">Vendido</div>
                                         </td>
                                     </tr>
@@ -660,7 +667,7 @@ export default function ReportsPage() {
                                 <div className="flex justify-between items-start">
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="font-black text-2xl text-[var(--color-text-main)]">${sale.total.toLocaleString()}</span>
+                                            <span className="font-black text-2xl text-[var(--color-text-main)]">${formatCurrency(sale.total)}</span>
                                             <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-widest ${sale.paymentMethod === 'Tarjeta' ? 'bg-blue-600 text-white' : 'bg-emerald-600 text-white shadow-sm'}`}>
                                                 {sale.paymentMethod || 'Efectivo'}
                                             </span>
@@ -673,7 +680,7 @@ export default function ReportsPage() {
                                     <div className="text-right">
                                         <div className="text-[9px] text-[var(--color-text-muted)] font-black uppercase tracking-widest mb-1">Ganancia Estimada</div>
                                         <div className="inline-flex h-9 px-4 items-center rounded-xl bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 font-black text-lg">
-                                            +${sale.profit.toLocaleString()}
+                                            +${formatCurrency(sale.profit)}
                                         </div>
                                     </div>
                                 </div>
@@ -697,8 +704,8 @@ export default function ReportsPage() {
                                                     <span className="h-6 min-w-[24px] px-1 flex items-center justify-center rounded-md bg-[var(--color-surface-highlight)] text-xs font-black text-[var(--color-text-main)] border border-[var(--color-glass-border)]">{item.quantity}</span>
                                                 </div>
                                                 <div className="col-span-3 flex flex-col items-end justify-center">
-                                                    <span className="text-[11px] font-black text-[var(--color-text-main)]">${(item.unitPrice * item.quantity).toLocaleString()}</span>
-                                                    <span className="text-[8px] text-[var(--color-text-muted)] font-bold">Un: ${item.unitPrice}</span>
+                                                    <span className="text-[11px] font-black text-[var(--color-text-main)]">${formatCurrency(item.unitPrice * item.quantity)}</span>
+                                                    <span className="text-[8px] text-[var(--color-text-muted)] font-bold">Un: ${formatCurrency(item.unitPrice)}</span>
                                                 </div>
                                             </div>
                                         ))}
