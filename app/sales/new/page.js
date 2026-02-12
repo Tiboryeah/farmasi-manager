@@ -10,7 +10,7 @@ const normalizeText = (text) => {
         .replace(/[\u0300-\u036f]/g, "");
 };
 import Link from "next/link";
-import { Search, Plus, Minus, Trash2, ArrowRight, DollarSign, ChevronLeft, Check } from "lucide-react";
+import { Search, Plus, Minus, Trash2, ArrowRight, DollarSign, ChevronLeft, Check, AlertTriangle, Filter } from "lucide-react";
 import { getProducts, createSale } from "@/app/actions";
 import { useRouter } from "next/navigation";
 
@@ -23,6 +23,8 @@ export default function NewSalePage() {
     const [products, setProducts] = useState([]);
     const [customerName, setCustomerName] = useState("");
     const [paymentMethod, setPaymentMethod] = useState("Efectivo");
+    const [sortBy, setSortBy] = useState("newest"); // newest, price-asc, price-desc, stock-asc, stock-desc
+    const [filterLowStock, setFilterLowStock] = useState(false);
 
     // Load products on mount
     useEffect(() => {
@@ -35,9 +37,29 @@ export default function NewSalePage() {
 
     const filteredProducts = products.filter(p => !p.isTest).filter(p => {
         const normalizedSearch = normalizeText(searchTerm);
-        const matchesSearch = normalizeText(p.name).includes(normalizedSearch);
+
+        const matchesName = normalizeText(p.name).includes(normalizedSearch);
+        const matchesCode = p.code ? normalizeText(p.code).includes(normalizedSearch) : false;
+        const matchesCategoryInSearch = p.category ? normalizeText(p.category).includes(normalizedSearch) : false;
+        const matchesAttributes = p.attributes ? p.attributes.some(attr =>
+            normalizeText(attr.value).includes(normalizedSearch)
+        ) : false;
+
+        const matchesSearch = matchesName || matchesCode || matchesCategoryInSearch || matchesAttributes;
         const matchesCategory = selectedCategory === "Todas" || p.category === selectedCategory;
-        return matchesSearch && matchesCategory;
+        const matchesLowStock = !filterLowStock || (p.stock <= (p.minStock || 0));
+
+        return matchesSearch && matchesCategory && matchesLowStock;
+    }).sort((a, b) => {
+        switch (sortBy) {
+            case 'price-asc': return a.price - b.price;
+            case 'price-desc': return b.price - a.price;
+            case 'stock-asc': return a.stock - b.stock;
+            case 'stock-desc': return b.stock - a.stock;
+            case 'newest':
+            default:
+                return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+        }
     });
 
     const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
@@ -147,15 +169,40 @@ export default function NewSalePage() {
                         </div>
                     </header>
 
-                    <div className="px-4 py-2 bg-[var(--color-surface)] border-b border-[var(--color-glass-border)] shrink-0 shadow-sm">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-2.5 text-[var(--color-text-muted)]" size={20} />
+                    <div className="px-4 py-3 bg-[var(--color-surface)] border-b border-[var(--color-glass-border)] shrink-0 shadow-sm flex flex-col gap-3">
+                        <div className="relative group flex-1 w-full">
+                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-primary transition-colors" size={20} />
                             <input
-                                className="w-full bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] rounded-2xl pl-10 h-10 text-[var(--color-text-main)] outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-[var(--color-text-muted)] shadow-sm"
-                                placeholder="Buscar producto..."
+                                className="w-full bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] rounded-2xl pl-12 h-12 text-[var(--color-text-main)] outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-[var(--color-text-muted)] shadow-sm text-base"
+                                placeholder="Buscar por nombre, código, categoría o atributo..."
                                 value={searchTerm}
                                 onChange={e => setSearchTerm(e.target.value)}
                             />
+                        </div>
+
+                        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide">
+                            <button
+                                onClick={() => setFilterLowStock(!filterLowStock)}
+                                className={`h-11 px-4 rounded-xl border flex items-center gap-2 font-bold transition-all whitespace-nowrap text-xs ${filterLowStock ? 'bg-red-500/10 border-red-500 text-red-500 shadow-lg shadow-red-500/20' : 'bg-[var(--color-surface-highlight)] border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:border-red-500/50'}`}
+                            >
+                                <AlertTriangle size={16} />
+                                Stock Bajo
+                            </button>
+
+                            <div className="relative min-w-[160px] flex-1">
+                                <Filter className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none" size={14} />
+                                <select
+                                    value={sortBy}
+                                    onChange={(e) => setSortBy(e.target.value)}
+                                    className="h-11 pl-9 pr-4 rounded-xl bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] text-[var(--color-text-main)] font-bold outline-none focus:border-primary transition-all appearance-none cursor-pointer w-full text-xs shadow-sm"
+                                >
+                                    <option value="newest">Recientes</option>
+                                    <option value="price-asc">Precio: $$$ → $$$</option>
+                                    <option value="price-desc">Precio: $$$ → $$$</option>
+                                    <option value="stock-asc">Stock: ↘</option>
+                                    <option value="stock-desc">Stock: ↗</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>

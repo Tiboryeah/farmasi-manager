@@ -510,8 +510,12 @@ export default function ProductDetailPage({ params }) {
                         <input
                             type="number"
                             className="bg-transparent border-none shadow-none focus:ring-0 p-0 w-24 text-2xl font-black text-[var(--color-text-main)] tracking-tighter outline-none"
-                            value={adjustment}
-                            onChange={(e) => setAdjustment(parseInt(e.target.value) || 0)}
+                            value={adjustment === 0 && typeof adjustment === 'number' ? '' : adjustment}
+                            placeholder="0"
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setAdjustment(val === '' ? '' : parseInt(val));
+                            }}
                         />
                         <div className="h-8 w-[1px] bg-[var(--color-glass-border)]"></div>
                         <span className="text-[10px] font-black text-[var(--color-text-muted)] uppercase tracking-widest">Cantidad a ajustar</span>

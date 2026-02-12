@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Search, Plus, AlertCircle, Trash, SearchX, Package, ArrowUpRight, Download, Layers, Grid, Copy, LayoutList } from "lucide-react";
+import { Search, Plus, AlertCircle, Trash, SearchX, Package, ArrowUpRight, Download, Layers, Grid, Copy, LayoutList, ArrowDownWideNarrow, ArrowUpWideNarrow, Clock, AlertTriangle, Filter } from "lucide-react";
 import { getProducts, deleteProduct, copyInventoryToSamples } from "@/app/actions";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -32,6 +32,8 @@ function InventoryContent() {
     const activeTab = searchParams.get('tab') || 'product';
     const selectedCategory = searchParams.get('cat') || 'Todas';
     const viewMode = searchParams.get('view') || 'grid';
+    const sortBy = searchParams.get('sort') || 'newest'; // 'newest' | 'oldest' | 'price-asc' | 'price-desc' | 'stock-asc' | 'stock-desc'
+    const filterLowStock = searchParams.get('lowStock') === 'true';
     const urlSearchTerm = searchParams.get('q') || '';
 
     const [products, setProducts] = useState([]);
@@ -52,6 +54,8 @@ function InventoryContent() {
     const handleTabChange = (tab) => updateURL({ tab, cat: 'Todas' });
     const handleCategoryChange = (cat) => updateURL({ cat });
     const handleViewChange = (view) => updateURL({ view });
+    const handleSortChange = (sort) => updateURL({ sort });
+    const handleToggleLowStock = () => updateURL({ lowStock: !filterLowStock ? 'true' : null });
 
     // Sync Search to URL with debounce
     useEffect(() => {
@@ -74,13 +78,36 @@ function InventoryContent() {
     // Derived States
     const filteredProducts = useMemo(() => {
         const normalizedSearch = normalizeText(searchTerm);
-        return products.filter(p => {
-            const matchesSearch = normalizeText(p.name).includes(normalizedSearch);
+        let result = products.filter(p => {
+            const matchesName = normalizeText(p.name).includes(normalizedSearch);
+            const matchesCode = p.code ? normalizeText(p.code).includes(normalizedSearch) : false;
+            const matchesCategoryInSearch = p.category ? normalizeText(p.category).includes(normalizedSearch) : false;
+            const matchesAttributes = p.attributes ? p.attributes.some(attr =>
+                normalizeText(attr.value).includes(normalizedSearch)
+            ) : false;
+
+            const matchesSearch = matchesName || matchesCode || matchesCategoryInSearch || matchesAttributes;
             const matchesTab = (p.type || 'product') === activeTab;
             const matchesCategory = selectedCategory === "Todas" || p.category === selectedCategory;
-            return matchesSearch && matchesTab && matchesCategory;
+            const matchesLowStock = !filterLowStock || (p.stock <= (p.minStock || 0));
+
+            return matchesSearch && matchesTab && matchesCategory && matchesLowStock;
         });
-    }, [products, searchTerm, activeTab, selectedCategory]);
+
+        // Apply Sorting
+        return result.sort((a, b) => {
+            switch (sortBy) {
+                case 'price-asc': return a.price - b.price;
+                case 'price-desc': return b.price - a.price;
+                case 'stock-asc': return a.stock - b.stock;
+                case 'stock-desc': return b.stock - a.stock;
+                case 'oldest': return new Date(a.createdAt || 0) - new Date(b.createdAt || 0);
+                case 'newest':
+                default:
+                    return new Date(b.createdAt || 0) - new Date(a.createdAt || 0);
+            }
+        });
+    }, [products, searchTerm, activeTab, selectedCategory, sortBy, filterLowStock]);
 
     const categories = useMemo(() => {
         return ["Todas", ...new Set(products
@@ -220,16 +247,45 @@ function InventoryContent() {
                 </button>
             </div>
 
-            <div className="relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-primary transition-colors" size={20} />
-                <input
-                    type="text"
-                    placeholder="Buscar producto por nombre o categoría..."
-                    style={{ height: '3.5rem' }}
-                    className="w-full bg-[var(--color-surface)] border border-[var(--color-glass-border)] rounded-2xl pl-12 text-lg outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-[var(--color-text-main)] placeholder:text-[var(--color-text-muted)] shadow-sm"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="flex flex-col md:flex-row gap-4 items-center">
+                <div className="relative group flex-1 w-full">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-primary transition-colors" size={20} />
+                    <input
+                        type="text"
+                        placeholder="Buscar producto por nombre o categoría..."
+                        style={{ height: '3.5rem' }}
+                        className="w-full bg-[var(--color-surface)] border border-[var(--color-glass-border)] rounded-2xl pl-12 text-lg outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 transition-all text-[var(--color-text-main)] placeholder:text-[var(--color-text-muted)] shadow-sm"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+
+                <div className="flex items-center gap-2 w-full md:w-auto">
+                    <button
+                        onClick={handleToggleLowStock}
+                        className={`h-14 px-4 rounded-2xl border flex items-center gap-2 font-bold transition-all whitespace-nowrap ${filterLowStock ? 'bg-red-500/10 border-red-500 text-red-500 shadow-lg shadow-red-500/20' : 'bg-[var(--color-surface)] border-[var(--color-glass-border)] text-[var(--color-text-muted)] hover:border-red-500/50'}`}
+                        title="Filtrar por stock bajo"
+                    >
+                        <AlertTriangle size={20} className={filterLowStock ? 'animate-pulse' : ''} />
+                        <span className="hidden sm:inline">Stock Bajo</span>
+                    </button>
+
+                    <div className="relative flex-1 md:flex-none">
+                        <Filter className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none" size={18} />
+                        <select
+                            value={sortBy}
+                            onChange={(e) => handleSortChange(e.target.value)}
+                            className="h-14 pl-11 pr-4 rounded-2xl bg-[var(--color-surface)] border border-[var(--color-glass-border)] text-[var(--color-text-main)] font-bold outline-none focus:border-primary transition-all appearance-none cursor-pointer w-full"
+                        >
+                            <option value="newest">Más Recientes</option>
+                            <option value="oldest">Más Antiguos</option>
+                            <option value="price-asc">Precio: Menor a Mayor</option>
+                            <option value="price-desc">Precio: Mayor a Menor</option>
+                            <option value="stock-asc">Stock: Menor a Mayor</option>
+                            <option value="stock-desc">Stock: Mayor a Menor</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div className="flex flex-col lg:flex-row bg-[var(--color-surface)] border border-[var(--color-glass-border)] rounded-3xl overflow-hidden shadow-sm min-h-[600px]">

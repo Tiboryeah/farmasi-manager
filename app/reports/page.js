@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { getAllSales, getExpenses, downloadBackupAction, restoreBackupAction, resetDatabaseAction } from "@/app/actions";
+import { getAllSales, getExpenses, getProducts, downloadBackupAction, restoreBackupAction, resetDatabaseAction } from "@/app/actions";
 import * as XLSX from 'xlsx';
 import { Download, TrendingUp, DollarSign, Calendar, BarChart3, Package, History, ArrowUpRight, Filter, ShieldCheck, Upload, AlertTriangle, RefreshCw, Trash2 } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, Cell } from 'recharts';
@@ -9,6 +9,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 export default function ReportsPage() {
     const [sales, setSales] = useState([]);
     const [expenses, setExpenses] = useState([]);
+    const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isBackingUp, setIsBackingUp] = useState(false);
     const [isRestoring, setIsRestoring] = useState(false);
@@ -18,12 +19,14 @@ export default function ReportsPage() {
         async function loadData() {
             setLoading(true);
             try {
-                const [allSales, allExpenses] = await Promise.all([
+                const [allSales, allExpenses, allProducts] = await Promise.all([
                     getAllSales(),
-                    getExpenses()
+                    getExpenses(),
+                    getProducts()
                 ]);
                 setSales(allSales);
                 setExpenses(allExpenses);
+                setProducts(allProducts);
             } catch (error) {
                 console.error("Error loading data:", error);
             } finally {
@@ -149,6 +152,31 @@ export default function ReportsPage() {
             return acc;
         }, []).sort((a, b) => b.quantity - a.quantity).slice(0, 10);
     }, [sales]);
+
+    // --- INVENTORY METRICS ---
+    const inventoryMetrics = useMemo(() => {
+        let totalValue = 0;
+        let totalCost = 0;
+
+        products.forEach(p => {
+            if (p.batches && p.batches.length > 0) {
+                p.batches.forEach(b => {
+                    totalValue += (b.stock * b.price);
+                    totalCost += (b.stock * b.cost);
+                });
+            } else {
+                // Fallback for legacy items without batches
+                totalValue += (p.stock * p.price);
+                totalCost += (p.stock * p.cost);
+            }
+        });
+
+        return {
+            totalValue,
+            totalCost,
+            potentialProfit: totalValue - totalCost
+        };
+    }, [products]);
 
     const handleDownload = (period = 'history') => {
         try {
@@ -334,44 +362,48 @@ export default function ReportsPage() {
 
     return (
         <div className="flex flex-col gap-12 animate-fade-in w-full pb-20">
-            <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-[var(--color-text-main)]">Reportes Financieros</h1>
-                    <p className="text-[var(--color-text-muted)] text-sm mt-1">Análisis profundo del rendimiento de tu negocio</p>
+                    <h1 className="text-4xl font-black text-[var(--color-text-main)] tracking-tighter">Reportes</h1>
+                    <p className="text-[var(--color-text-muted)] text-sm font-medium mt-1">Análisis profundo del rendimiento de tu negocio</p>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="bg-[var(--color-surface-highlight)] border border-[var(--color-glass-border)] p-1 rounded-2xl flex shadow-sm">
-                        <button
-                            onClick={() => setTimeFrame('week')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'week' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
-                        >
-                            Vista Semanal
-                        </button>
-                        <button
-                            onClick={() => setTimeFrame('month')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'month' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
-                        >
-                            Mensual
-                        </button>
-                        <button
-                            onClick={() => setTimeFrame('year')}
-                            className={`px-5 py-2 text-sm font-bold rounded-xl transition-all ${timeFrame === 'year' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
-                        >
-                            Anual
-                        </button>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-[var(--color-surface)] p-2 rounded-2xl border border-[var(--color-glass-border)] shadow-xl shadow-black/5">
+                    <div className="px-4 py-2 border-r border-[var(--color-glass-border)] last:border-0">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--color-text-muted)] mb-1">Costo Inv. Total</p>
+                        <p className="text-lg font-black text-[var(--color-text-main)]">${(inventoryMetrics.totalCost || 0).toLocaleString()}</p>
                     </div>
+                    <div className="px-4 py-2 border-r border-[var(--color-glass-border)] last:border-0">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500 mb-1">Valor Inv. Total</p>
+                        <p className="text-lg font-black text-emerald-500">${(inventoryMetrics.totalValue || 0).toLocaleString()}</p>
+                    </div>
+                    <div className="px-4 py-2 border-r border-[var(--color-glass-border)] last:border-0 text-center">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">Ganancia Potencial</p>
+                        <p className="text-lg font-black text-primary">${(inventoryMetrics.potentialProfit || 0).toLocaleString()}</p>
+                    </div>
+                </div>
 
+                <div className="bg-[var(--color-surface)] p-1.5 rounded-2xl border border-[var(--color-glass-border)] shadow-xl shadow-black/5 flex gap-1 self-start md:self-auto">
                     <button
-                        onClick={handleDownloadBackup}
-                        disabled={isBackingUp}
-                        className={`btn h-12 rounded-2xl flex items-center gap-2 px-6 shadow-sm transition-all ${isBackingUp ? 'opacity-50 cursor-not-allowed bg-[var(--color-surface-highlight)] text-[var(--color-text-muted)]' : 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 hover:bg-emerald-500/20'}`}
+                        onClick={() => setTimeFrame('week')}
+                        className={`px-5 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${timeFrame === 'week' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
                     >
-                        <ShieldCheck size={18} />
-                        <span>{isBackingUp ? 'Procesando...' : 'Respaldo Nube'}</span>
+                        Semana
+                    </button>
+                    <button
+                        onClick={() => setTimeFrame('month')}
+                        className={`px-5 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${timeFrame === 'month' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
+                    >
+                        Mes
+                    </button>
+                    <button
+                        onClick={() => setTimeFrame('year')}
+                        className={`px-5 py-2 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${timeFrame === 'year' ? 'bg-[var(--color-text-main)] text-[var(--color-surface)] shadow-md' : 'text-[var(--color-text-muted)] hover:text-[var(--color-text-main)]'}`}
+                    >
+                        Año
                     </button>
                 </div>
-            </header>
+            </div>
 
             <section className="card p-6 bg-[var(--color-surface)] text-[var(--color-text-main)] border-[var(--color-glass-border)] shadow-xl rounded-2xl overflow-hidden relative">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full blur-3xl -mr-32 -mt-32"></div>
